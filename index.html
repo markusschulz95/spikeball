@@ -1,0 +1,947 @@
+<title>Spikeball Liga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: Handy-App, eine Spalte, Anzeigetafel oben, Tab-Leiste unten. Bewusst nur dunkel: Flutlicht-Platz bei Nacht, Netzrand-Gelb als einzige Signalfarbe. */
+:root{
+  color-scheme:dark;
+  --bg:#090d12; --bg2:#0d141b; --surface:#121b24; --surface2:#1a2632; --raise:#202f3d; --line:#22313f; --line2:#2e4152;
+  --fg:#eef3f7; --muted:#8b9cad; --faint:#5e6f80;
+  --accent:#f6c52a; --accent2:#ffdc66; --accent-ink:#1a1503;
+  --sea:#4fd1c5; --good:#3fd98a; --bad:#ff6d5e;
+  --p-E:#38bdf8; --p-A:#fb923c; --p-W:#a78bfa; --p-J:#4ade80; --p-M:#f472b6;
+  --display:"Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:18px; --shadow:0 1px 0 rgb(255 255 255 / .04) inset, 0 10px 30px -12px rgb(0 0 0 / .7);
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{background:radial-gradient(1200px 500px at 50% -180px,rgb(246 197 42 / .10),transparent 60%),var(--bg);background-attachment:fixed;color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+a{color:var(--accent2)}
+.wrap{max-width:660px;margin:0 auto;padding-inline:16px;padding-block:6px 120px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;padding-block:14px 12px;display:flex;align-items:center;gap:12px;background:linear-gradient(var(--bg) 70%,transparent);backdrop-filter:blur(6px)}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,var(--accent2),var(--accent));display:grid;place-items:center;flex:none;box-shadow:0 6px 18px -6px rgb(246 197 42 / .6)}
+.logo svg{width:26px;height:26px}
+.ttl{min-width:0}
+.ttl h1{font-family:var(--display);font-weight:800;font-size:21px;margin:0;line-height:1.05;letter-spacing:-.02em}
+.ttl div{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status{margin-left:auto;font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--surface);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.status.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px;box-shadow:0 0 0 3px rgb(63 217 138 / .18)}
+h2{font-family:var(--display);font-weight:800;font-size:23px;margin:30px 0 12px;letter-spacing:-.02em;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 8px;letter-spacing:-.01em}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.card{background:linear-gradient(180deg,var(--surface),var(--bg2));border-radius:var(--r);padding:16px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:center;gap:10px;min-width:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.lead-p{margin:-6px 0 12px;color:var(--muted);font-size:13.5px}
+.banner{padding:11px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line2);font-size:13.5px;margin-top:8px}
+/* Avatare */
+.av{--s:30px;width:var(--s);height:var(--s);border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:calc(var(--s)*.42);color:#0b0f14;background:var(--pc);overflow:hidden;border:2px solid var(--bg)}
+.av img{width:100%;height:100%;object-fit:cover}
+.av.lg{--s:56px}.av.sm{--s:24px}.av.xl{--s:64px;border-width:3px}
+.duo{display:flex;align-items:center;min-width:0;gap:9px}
+.duo .avs{display:flex;flex:none}.duo .avs .av+.av{margin-left:-10px}
+.duo .nm{min-width:0;font-weight:600;font-size:14px;line-height:1.25}
+/* Nächstes Spiel */
+.hero{position:relative;border-radius:22px;padding:18px 16px 16px;background:radial-gradient(500px 200px at 50% 0,rgb(246 197 42 / .16),transparent 70%),linear-gradient(180deg,var(--raise),var(--surface));border:1px solid var(--line2);box-shadow:var(--shadow);overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(160deg,rgb(246 197 42 / .55),transparent 40%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.hero .eyebrow{color:var(--accent)}
+.match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:14px 0 12px}
+.team{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;min-width:0}
+.team .avs{display:flex}.team .avs .av+.av{margin-left:-14px}
+.team .nm{font-weight:700;font-size:14.5px;line-height:1.25}
+.team .pc{font-family:var(--display);font-weight:800;font-size:26px;line-height:1}
+.team .pc.fav{color:var(--accent)}
+.vsbig{font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.14em;color:var(--faint)}
+.hero .chance{height:8px}
+.hero .ref{display:flex;align-items:center;gap:8px;justify-content:center;font-size:13px;color:var(--muted);margin:12px 0 14px}
+/* Spiele */
+.game{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:12px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);cursor:pointer;text-align:left;width:100%}
+.game:hover:not(.done):not(:disabled){border-color:var(--line2);background:var(--surface2)}
+.game:focus-visible,.chip:focus-visible,.btn:focus-visible,.tab:focus-visible,.mode:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.game .r{justify-content:flex-end;text-align:right}
+.game .r .nm{order:-1}
+.game.next{border-color:rgb(246 197 42 / .55)}
+.game.done{cursor:default;background:transparent;border-style:dashed}
+.vs{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.12em;color:var(--faint);text-align:center;min-width:54px;text-transform:uppercase}
+.score{font-family:var(--display);font-weight:800;font-size:21px;color:var(--fg);letter-spacing:0}
+.won .nm{color:var(--good)}
+.gmeta{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.chance{flex:1;height:5px;border-radius:99px;background:var(--surface2);overflow:hidden;display:flex;gap:2px}
+.chance i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.chance b{display:block;height:100%;background:var(--line2);flex:1;border-radius:99px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--surface2);color:var(--muted);white-space:nowrap;letter-spacing:.02em}
+.pill.acc{background:var(--accent);color:var(--accent-ink)}
+.pill.good{background:rgb(63 217 138 / .14);color:var(--good)}
+/* Buttons */
+.btn{border:1px solid transparent;border-radius:14px;padding:12px 18px;font-weight:700;cursor:pointer;background:var(--surface2)}
+.btn.pri{background:linear-gradient(180deg,var(--accent2),var(--accent));color:var(--accent-ink);box-shadow:0 8px 20px -10px rgb(246 197 42 / .8)}
+.btn.ghost{background:transparent;border-color:var(--line2)}
+.btn.danger{background:var(--bad);color:#160604}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line2);background:transparent;border-radius:99px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+/* Modus-Wahl */
+.modes{display:grid;gap:10px}
+.mode{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:14px;border-radius:16px;border:1px solid var(--line);background:var(--surface);cursor:pointer;width:100%}
+.mode[aria-pressed="true"]{border-color:var(--accent);background:linear-gradient(180deg,rgb(246 197 42 / .10),var(--surface))}
+.mode .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line2);flex:none;margin-top:2px}
+.mode[aria-pressed="true"] .dot{border:6px solid var(--accent)}
+.mode strong{display:block;font-size:15.5px;margin-bottom:2px}
+.mode span{font-size:13px;color:var(--muted)}
+.formula{display:inline-block;margin-top:6px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;padding:3px 8px;border-radius:8px;background:var(--bg);border:1px solid var(--line);color:var(--fg)}
+/* Erklärungen */
+details.acc{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+details.acc+details.acc{margin-top:8px}
+details.acc summary{list-style:none;cursor:pointer;padding:14px 16px;font-weight:700;display:flex;align-items:center;gap:10px}
+details.acc summary::-webkit-details-marker{display:none}
+details.acc summary::after{content:"";margin-left:auto;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s}
+details.acc[open] summary::after{transform:rotate(-135deg)}
+details.acc summary .num{font-family:var(--display);font-weight:800;color:var(--accent);font-size:13px;min-width:18px}
+.acc-b{padding:0 16px 16px;font-size:14px;color:#cfd9e2;max-width:68ch}
+.acc-b p{margin:0 0 10px}.acc-b ul{margin:0 0 10px;padding-left:18px}.acc-b li{margin-bottom:5px}
+.acc-b strong{color:var(--fg)}
+.ex{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0 10px;font-size:13.5px}
+.ex b{color:var(--accent)}
+.cmp{width:100%;font-size:13px}
+.cmp td,.cmp th{text-align:left;white-space:normal;vertical-align:top}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+/* Balken */
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:24px 76px 1fr 48px;align-items:center;gap:8px;font-size:13.5px}
+.bar .track{height:10px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.bar .fill{height:100%;border-radius:99px;background:var(--pc);box-shadow:0 0 12px -2px var(--pc)}
+.bar .v{text-align:right;font-weight:700}
+/* Tabellen */
+.tw{overflow-x:auto;margin-inline:-16px;padding-inline:16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:700;text-align:right;padding:6px;white-space:nowrap}
+td{padding:10px 6px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+td.main{font-family:var(--display);font-weight:800;font-size:18px}
+.rank{font-family:var(--display);font-weight:800;color:var(--faint);width:22px;display:inline-block}
+tr.lead td{background:linear-gradient(90deg,rgb(246 197 42 / .14),transparent)}
+tr.lead .rank{color:var(--accent)}
+.mx td,.mx th{text-align:center;padding:7px 4px}
+.mx td{border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+.mx td.self{background:var(--surface2)}
+/* Statistik */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13.5px;margin:12px 0 0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;text-align:right;font-weight:600}
+.chartwrap{overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin-top:8px}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;background:var(--pc);vertical-align:middle;margin-right:5px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.tile{background:linear-gradient(180deg,var(--surface),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:3px}
+.tile b{font-family:var(--display);font-weight:800;font-size:27px;line-height:1.05;letter-spacing:-.02em}
+.tile span{font-size:12.5px;color:var(--muted)}
+.form{display:flex;align-items:center;gap:4px;margin-top:12px}
+.form i{font-style:normal;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:800}
+.form i.w{background:rgb(63 217 138 / .18);color:var(--good)}.form i.l{background:rgb(255 109 94 / .16);color:var(--bad)}
+.form span{margin-left:6px}
+.rl{min-width:150px;color:var(--muted)}
+.empty{padding:26px 18px;text-align:center;color:var(--muted);border:1.5px dashed var(--line2);border-radius:var(--r)}
+/* Tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:rgb(9 13 18 / .82);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border-top:1px solid var(--line)}
+.tabsin{display:grid;grid-template-columns:repeat(6,1fr);width:100%;max-width:660px}
+.tab{border:0;background:none;padding:4px 2px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--faint)}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tab[aria-selected="true"]{color:var(--fg)}
+.tab[aria-selected="true"] .tic{background:rgb(246 197 42 / .16);color:var(--accent)}
+.tic{border-radius:99px;padding:3px 16px;display:grid;place-items:center}
+/* Eingabe-Blatt */
+.sheetbg{position:fixed;inset:0;z-index:20;background:rgb(0 0 0 / .62);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:linear-gradient(180deg,var(--raise),var(--bg2) 40%);border:1px solid var(--line2);border-bottom:0;width:100%;max-width:660px;border-radius:24px 24px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:92%;overflow:auto}
+.sheet::before{content:"";display:block;width:40px;height:4px;border-radius:99px;background:var(--line2);margin:-8px auto 14px}
+.entry{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0}
+.side .avs{display:flex}.side .avs .av+.av{margin-left:-14px}
+.side .nm{font-weight:700;text-align:center;font-size:14px}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);background:var(--surface2);font-size:22px;font-weight:700;cursor:pointer}
+.stepper input{width:60px;height:52px;text-align:center;font-family:var(--display);font-weight:800;font-size:30px;border:1px solid var(--line2);border-radius:12px;background:var(--bg);color:var(--fg)}
+.stepper input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.err{color:var(--bad);font-size:13.5px;min-height:20px}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:700;font-size:14px;z-index:30;max-width:calc(100% - 32px);box-shadow:0 10px 30px -8px rgb(0 0 0 / .8)}
+.hist{display:flex;flex-direction:column}
+.hist .h{display:flex;align-items:center;gap:8px;padding:11px 0;border-top:1px solid var(--line);font-size:13.5px;flex-wrap:wrap}
+.hist .h:first-child{border-top:0;padding-top:0}.hist .h:last-child{padding-bottom:0}
+.prow{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.prow:first-child{border-top:0;padding-top:0}
+.rules li{margin-bottom:6px}
+.finale{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.ctx{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;background:var(--surface);border:1px solid var(--line);margin-top:8px}
+.ctx>div{display:flex;flex-direction:column;min-width:0;flex:1}
+.ctx strong{font-size:16px}
+.scopes{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px;margin-inline:-16px;padding-inline:16px;scrollbar-width:none}
+.scopes .chip{white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:6px}
+.livedot{width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block}
+.tourcard{display:flex;gap:14px;align-items:center;text-align:left;width:100%;padding:14px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,var(--surface),var(--bg2));cursor:pointer}
+.tourcard:hover{border-color:var(--line2)}
+.tourcard .tn{display:block;font-family:var(--display);font-size:18px;font-weight:800;margin:2px 0;letter-spacing:-.01em}
+.trophy{position:relative}
+.trophy::after{content:"";position:absolute;right:-4px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1503' stroke-width='2.4'%3E%3Cpath d='M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z'/%3E%3C/svg%3E") center/12px no-repeat;border:2px solid var(--bg)}
+.field{width:100%;margin-top:8px;padding:13px 14px;border-radius:14px;border:1px solid var(--line2);background:var(--bg);color:var(--fg);font:inherit;font-size:16px}
+.field:focus{outline:2px solid var(--accent);outline-offset:1px}
+.badge{position:absolute;margin:-8px 0 0 18px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--bad);color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center}
+.tic{position:relative}
+.chat{display:flex;flex-direction:column;gap:8px;padding-bottom:70px}
+.daysep{text-align:center;margin:10px 0 4px}.daysep span{font-size:11.5px;font-weight:700;color:var(--faint);background:var(--surface);border:1px solid var(--line);padding:3px 10px;border-radius:99px}
+.msg{display:flex;align-items:flex-end;gap:8px;max-width:86%}
+.msg.mine{align-self:flex-end}
+.bub{background:var(--surface2);border:1px solid var(--line);padding:8px 12px;border-radius:16px 16px 16px 6px;font-size:14.5px;line-height:1.4;overflow-wrap:anywhere;min-width:0}
+.msg.mine .bub{background:rgb(246 197 42 / .16);border-color:rgb(246 197 42 / .35);border-radius:16px 16px 6px 16px}
+.bub .who{display:block;font-size:12px;font-weight:700}
+.bub .tm,.evt .tm{font-size:10.5px;color:var(--faint);margin-left:8px;white-space:nowrap}
+.evt{align-self:center;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);padding:6px 12px;border-radius:12px;border:1px dashed var(--line2);max-width:100%}
+.evt strong{font-family:var(--display);color:var(--fg)}.evt .wn{color:var(--good)}
+.evt.warn{border-style:solid;border-color:rgb(255 109 94 / .45);color:var(--fg);background:rgb(255 109 94 / .08)}
+.evt.tour{border-style:solid;border-color:rgb(246 197 42 / .4);color:var(--accent2)}
+.linkbtn{background:none;border:0;color:var(--accent2);cursor:pointer;padding:0;text-decoration:underline;font-size:inherit}
+.composer{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:9;display:flex;gap:8px;padding:10px max(16px,calc((100% - 628px)/2));background:rgb(9 13 18 / .9);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+.composer input{flex:1;min-width:0;padding:12px 14px;border-radius:14px;border:1px solid var(--line2);background:var(--bg);color:var(--fg);font:inherit;font-size:16px}
+.composer input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.vrow{display:flex;align-items:center;gap:8px;margin-top:10px}
+.vbar{flex:1;max-width:140px;height:6px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.vbar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.vrow .avs,.vtag .avs{display:flex}.vrow .avs .av+.av,.vtag .avs .av+.av{margin-left:-7px}
+.vtag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:3px 4px 3px 10px;border-radius:99px;border:1px solid var(--line2)}
+.src{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.7}
+@media (prefers-reduced-motion:no-preference){.game,.mode,.chip,.btn{transition:transform .12s,background .15s,border-color .15s}.game:not(.done):active,.btn:active{transform:scale(.98)}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#1d1a05" stroke-width="2"/><path d="M5 9h14M4 13h16M6 17h12M9 4v16M15 4v16" stroke="#1d1a05" stroke-width="1" opacity=".55"/></svg></div>
+    <div class="ttl"><h1>Spikeball Liga</h1><div id="sub">Eugen · Andi · Waldi · Jonas · Markus</div></div>
+    <span class="status" id="status">Lädt …</span>
+  </header>
+  <main id="view"><div class="empty">Spielstand wird geladen …</div></main>
+</div>
+<nav class="tabs" aria-label="Bereiche"><div class="tabsin" role="tablist" id="tabs"></div></nav>
+<form id="composer" class="composer" hidden autocomplete="off"><input id="msg" maxlength="500" placeholder="Nachricht schreiben" aria-label="Nachricht"><button class="btn pri" type="submit">Senden</button></form>
+<div id="sheet"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+"use strict";
+/* ---------- Grunddaten ---------- */
+const PLAYERS=[{id:"E",name:"Eugen"},{id:"A",name:"Andi"},{id:"W",name:"Waldi"},{id:"J",name:"Jonas"},{id:"M",name:"Markus"}];
+const IDS=PLAYERS.map(p=>p.id);
+const CYCLES=["WJM","WMJ","JWM","JMW","MWJ","MJW"].map(p=>("EA"+p).split(""));
+const K=32;
+const BONUS={quote:[3,2,1],elo:[20,10,5],kombi:[12,8,4]};
+const MODES={
+  quote:{name:"Einfach",unit:"Siegquote",desc:"Wer prozentual am häufigsten gewinnt, liegt vorn. Jeder kann es im Kopf nachrechnen.",f:"Siegquote in % + Tagesbonus (3 / 2 / 1)"},
+  elo:{name:"Elo",unit:"Elo",desc:"Siege gegen starke Gegner bringen viel, Siege als Favorit wenig. Gleicht Glück bei der Auslosung aus.",f:"Elo-Wert + Tagesbonus (20 / 10 / 5)"},
+  kombi:{name:"Kombi",unit:"Punkte",desc:"Siege bleiben die Basis, die Gegnerstärke fließt etwa gleich stark mit ein.",f:"Quote × 4 + (Elo − 1000) + Bonus (12 / 8 / 4)"}
+};
+const TABS=[
+  {id:"play",label:"Spielen",icon:'<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/>'},
+  {id:"table",label:"Tabelle",icon:'<path d="M4 6h16M4 12h16M4 18h10"/>'},
+  {id:"stats",label:"Statistik",icon:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'},
+  {id:"tours",label:"Turniere",icon:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3"/>'},
+  {id:"chat",label:"Chat",icon:'<path d="M4 5h16v11H9l-5 4z"/>'},
+  {id:"more",label:"Mehr",icon:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11M9 8h6"/>'}
+];
+
+/* ---------- Zustand ---------- */
+const S={games:[],gamesOld:[],players:{},settings:{},tours:{},chat:[],mode:"loading",canWrite:true,tab:"play",simExtra:0,tourExtra:5,myDeletes:new Set(),gamesLoaded:false,confirmDel:null,scope:null,confirmEnd:false,me:null,lastSeen:0,newTour:{name:"",theme:"Urlaub",mode:"kombi"}};
+try{S.me=localStorage.getItem("spikeball-me");if(!IDS.includes(S.me))S.me=null;S.lastSeen=Number(localStorage.getItem("spikeball-seen"))||0}catch(e){}
+const THEMES=["Urlaub","Geburtstag","Grillabend","Feiertag","Saison","Sonstiges"];
+const MAJ=3,PREF=["kombi","quote","elo"],MINGAMES=4;
+/* Liga-Wertung: Siegquote. Gewertet wird, wer mind. 4 Spiele und mind. ein Drittel der Spiele des Fleißigsten hat. */
+const liga=(w,n)=>n?w/n:0;
+const minNeeded=maxN=>Math.max(MINGAMES,Math.ceil(maxN/3));
+function tally(v){const c={quote:0,elo:0,kombi:0};if(v&&typeof v==="object")Object.entries(v).forEach(([p,m])=>{if(IDS.includes(p)&&m in c)c[m]++});return c}
+function leader(v){const c=tally(v),mx=Math.max(...PREF.map(k=>c[k])),top=PREF.filter(k=>c[k]===mx);return top.length===1?top[0]:"kombi"}
+function majority(v){const c=tally(v);return PREF.find(k=>c[k]>=MAJ)||null}
+function ewigMode(){return MODES[S.settings.mode]?S.settings.mode:leader(S.settings.votes)}
+function tourMode(T){return MODES[T.mode]?T.mode:leader(T.votes)}
+function isLocked(target){if(target==="all")return!!MODES[S.settings.mode];const T=S.tours[target];return!!(T&&MODES[T.mode])}
+function activeTour(){const id=S.settings.active;return id&&S.tours[id]&&!S.tours[id].end?id:null}
+function scopeId(){if(S.scope==="all")return"all";if(S.scope&&S.tours[S.scope])return S.scope;return activeTour()||"all"}
+function tourName(id){const t=S.tours[id];return t&&typeof t.name==="string"&&t.name.trim()?t.name.trim().slice(0,40):"Turnier"}
+function dateLabel(ts){return new Date(ts).toLocaleDateString("de-DE",{day:"numeric",month:"short",year:"numeric"})}
+function allGames(){const m=new Map();for(const g of S.gamesOld)m.set(g.id,g);for(const g of S.games)m.set(g.id,g);return[...m.values()]}
+let store=null;
+
+/* ---------- Hilfen ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nameOf=id=>{const p=S.players[id];const n=p&&typeof p.name==="string"&&p.name.trim()?p.name.trim():PLAYERS.find(x=>x.id===id).name;return n.slice(0,20)};
+const fmt=(n,d=0)=>Number(n).toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=x=>fmt(x*100,0)+" %";
+const sign=n=>(n>0?"+":n<0?"−":"±")+fmt(Math.abs(n),0);
+function dayKey(t){const d=new Date(t);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+/* Spieltag: alles bis 5 Uhr morgens gehört noch zum Vortag */
+const DAYSHIFT=5*3600e3;function spieltag(ts){return dayKey((ts||0)-DAYSHIFT)}
+function dayLabel(k){const [y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);return dt.toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"numeric"})}
+const expct=(a,b)=>1/(1+Math.pow(10,(b-a)/400));
+const avg=(r,t)=>(r[t[0]]+r[t[1]])/2;
+function av(id,cls=""){const p=S.players[id];const ph=p&&typeof p.photo==="string"&&p.photo.startsWith("data:image/")?p.photo:null;
+  return `<span class="av ${cls}" style="--pc:var(--p-${id})" title="${esc(nameOf(id))}">${ph?`<img alt="" src="${ph}">`:esc(nameOf(id).charAt(0))}</span>`}
+function duo(t,cls=""){return `<div class="duo ${cls}"><span class="avs">${av(t[0])}${av(t[1])}</span><span class="nm">${esc(nameOf(t[0]))} + ${esc(nameOf(t[1]))}</span></div>`}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2200)}
+
+/* ---------- Spielplan ---------- */
+function cycleGames(c){return c.map((p,i)=>{const a=c[(i+4)%5],b=c[(i+1)%5];return{ref:p,t1:[a,b],t2:c.filter(x=>x!==p&&x!==a&&x!==b)}})}
+const PLAN={};
+function roundPlan(k){
+  if(PLAN[k])return PLAN[k];
+  const g=cycleGames(CYCLES[k%6]);let r=0;
+  if(k>0){const last=roundPlan(k-1)[4].ref;while(g[r].ref===last)r++}
+  return PLAN[k]=g.slice(r).concat(g.slice(0,r));
+}
+function fourPlan(absent){const [a,b,c,d]=IDS.filter(x=>x!==absent);return[{t1:[a,b],t2:[c,d]},{t1:[a,c],t2:[b,d]},{t1:[a,d],t2:[b,c]}]}
+function validScore(a,b,to=11){const hi=Math.max(a,b),lo=Math.min(a,b);if(!Number.isInteger(a)||!Number.isInteger(b)||a<0||b<0)return"Bitte zwei ganze Zahlen eintragen.";
+  if(hi<to)return"Gespielt wird bis "+to+".";if(hi-lo<2)return"Es braucht 2 Punkte Vorsprung.";if(hi>to&&hi-lo!==2)return"Über "+to+" endet das Spiel genau bei 2 Punkten Vorsprung.";return""}
+
+/* ---------- Auswertung ---------- */
+function isGame(g){return g&&Array.isArray(g.t1)&&Array.isArray(g.t2)&&g.t1.length===2&&g.t2.length===2&&[...g.t1,...g.t2].every(x=>IDS.includes(x))&&Number.isFinite(g.s1)&&Number.isFinite(g.s2)&&g.s1!==g.s2}
+function compute(scope="all"){
+  const all=allGames().filter(isGame).map(g=>({...g})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  const strength={};IDS.forEach(p=>strength[p]=1000);
+  for(const g of all){const e=expct(avg(strength,g.t1),avg(strength,g.t2)),d=K*((g.s1>g.s2?1:0)-e);g._e=e;g._d=d;g.t1.forEach(p=>strength[p]+=d);g.t2.forEach(p=>strength[p]-=d)}
+  const tour=scope!=="all"&&S.tours[scope]?S.tours[scope]:null;
+  const games=tour?all.filter(g=>g.tour===scope):all;
+  const elo={},w={},n={},hist=[],pw={},h2h={},streak={},best={},close={},closeN={},bonus={},pf={},pa={},big={},worst={},peak={},ups={},form={},refN={},dayWins={};
+  const rec={long:null,big:null,upset:null,jump:null};
+  IDS.forEach(p=>{elo[p]=1000;w[p]=0;n[p]=0;streak[p]=0;best[p]=0;close[p]=0;closeN[p]=0;bonus[p]=0;pf[p]=0;pa[p]=0;big[p]=null;worst[p]=null;peak[p]=1000;ups[p]=0;form[p]=[];refN[p]=0;dayWins[p]=0;pw[p]={};h2h[p]={};IDS.forEach(q=>{pw[p][q]={w:0,n:0};h2h[p][q]={w:0,n:0}})});
+  hist.push({...elo});
+  const days={},duos={};
+  for(const g of games){
+    const win1=g.s1>g.s2,e=g._e,d=g._d;
+    const day=g.ts?spieltag(g.ts):g.day;
+    const D=days[day]||(days[day]={games:[],w:{},n:{},gain:{},n5:0,players:new Set()});
+    D.games.push(g);if(g.kind!=="4")D.n5++;
+    const sides=[[g.t1,win1,d,g.t2,g.s1,g.s2,e],[g.t2,!win1,-d,g.t1,g.s2,g.s1,1-e]];
+    if(g.ref&&IDS.includes(g.ref))refN[g.ref]++;
+    const tot=g.s1+g.s2,mg=Math.abs(g.s1-g.s2);
+    if(!rec.long||tot>rec.long.g.s1+rec.long.g.s2)rec.long={g};
+    if(!rec.big||mg>Math.abs(rec.big.g.s1-rec.big.g.s2))rec.big={g};
+    if(!rec.jump||Math.abs(d)>Math.abs(rec.jump.d))rec.jump={g,d,t:win1?g.t1:g.t2};
+    for(const [t,won,dd,opp,my,their,ex] of sides){
+      if(won&&(!rec.upset||ex<rec.upset.ex))rec.upset={g,ex,t};
+      const key=t.slice().sort().join("");const du=duos[key]||(duos[key]={t:t.slice().sort(),w:0,n:0});du.n++;if(won)du.w++;
+      for(const p of t){
+        elo[p]+=dd;n[p]++;if(won)w[p]++;
+        D.players.add(p);D.n[p]=(D.n[p]||0)+1;D.w[p]=(D.w[p]||0)+(won?1:0);D.gain[p]=(D.gain[p]||0)+dd;
+        const mate=t.find(x=>x!==p);pw[p][mate].n++;if(won)pw[p][mate].w++;
+        for(const o of opp){h2h[p][o].n++;if(won)h2h[p][o].w++}
+        streak[p]=won?Math.max(1,streak[p]+1):Math.min(-1,streak[p]-1);if(streak[p]>best[p])best[p]=streak[p];
+        if(Math.abs(g.s1-g.s2)===2){closeN[p]++;if(won)close[p]++}
+        pf[p]+=my;pa[p]+=their;peak[p]=Math.max(peak[p],elo[p]);form[p].push(won);if(won&&ex<0.4)ups[p]++;
+        if(won&&(!big[p]||my-their>big[p].m))big[p]={m:my-their,g};
+        if(!won&&(!worst[p]||their-my>worst[p].m))worst[p]={m:their-my,g};
+      }
+    }
+    hist.push({...elo});
+  }
+  const mode="liga";
+  const dayList=Object.keys(days).sort().map(k=>{
+    const D=days[k];const rank=dayRank(D);
+    if(rank.length&&rank[0].ok)dayWins[rank[0].p]++;
+    return{key:k,...D,rank};
+  });
+  const q=p=>n[p]?w[p]/n[p]:0;
+  const need=minNeeded(Math.max(...IDS.map(p=>n[p])));
+  const table=IDS.map(p=>({p,w:w[p],n:n[p],q:q(p),elo:elo[p],dayWins:dayWins[p],score:liga(w[p],n[p]),ok:n[p]>=need}))
+    .sort((a,b)=>(b.ok-a.ok)||(!b.n-!a.n)||(Math.abs(b.score-a.score)>1e-9?b.score-a.score:0)||(b.w-a.w)||(h2h[b.p][a.p].w-h2h[a.p][b.p].w)||(b.elo-a.elo));
+  table.forEach((r,i)=>{const o=table[i-1];r.tie=i>0&&r.ok&&o.ok&&Math.abs(o.score-r.score)<1e-9&&o.w===r.w&&h2h[r.p][o.p].w===h2h[o.p][r.p].w&&Math.abs(o.elo-r.elo)<.5});
+  return{need,games,elo,w,n,hist,pw,h2h,streak,best,close,closeN,bonus,pf,pa,big,worst,peak,ups,form,refN,dayWins,rec,days:dayList,duos:Object.values(duos),table,mode,all,strength,tour,scope};
+}
+function dayRank(D){
+  const need=minNeeded(Math.max(...[...D.players].map(p=>D.n[p])));
+  return [...D.players].map(p=>{const w=D.w[p],n=D.n[p];return{p,q:w/n,score:liga(w,n),gain:D.gain[p]||0,w,n,ok:n>=need}})
+    .sort((a,b)=>(b.ok-a.ok)||(Math.abs(b.score-a.score)>1e-9?b.score-a.score:0)||(b.w-a.w)||(b.gain-a.gain));
+}
+
+/* ---------- Aktuelle Runde ---------- */
+function roundState(C){
+  const slots={};for(const g of C.all)if(g.kind==="5"&&Number.isInteger(g.round)){(slots[g.round]||(slots[g.round]={}))[g.slot]=g}
+  let k=0;while(slots[k]&&Object.keys(slots[k]).length>=5)k++;
+  const four=S.settings.four&&typeof S.settings.four.id==="string"&&IDS.includes(S.settings.four.absent)?S.settings.four:null;
+  let fourGames=null;
+  if(four){const pl=fourPlan(four.absent);const played=C.all.filter(g=>g.kind==="4"&&g.group===four.id);
+    fourGames=pl.map((x,i)=>({...x,slot:i,game:played.find(g=>g.slot===i)}));if(fourGames.every(x=>x.game))fourGames=null}
+  return{k,games:roundPlan(k).map((x,i)=>({...x,slot:i,game:(slots[k]||{})[i]})),four:fourGames?four:null,fourGames};
+}
+function pendingGames(R){
+  if(R.fourGames)return R.fourGames.filter(x=>!x.game);
+  return R.games.filter(x=>!x.game);
+}
+
+/* ---------- Simulation ---------- */
+function simulate(C,R,extra,iters=2000){
+  const today=spieltag(Date.now());const D=C.days.find(d=>d.key===today);
+  let rest=pendingGames(R).map(x=>({t1:x.t1,t2:x.t2,five:!R.fourGames}));
+  for(let i=1;i<=extra;i++)rest=rest.concat(roundPlan(R.k+i).map(x=>({t1:x.t1,t2:x.t2,five:true})));
+  if(!rest.length&&!D)return null;
+  const counts={};IDS.forEach(p=>counts[p]=0);
+  const base={w:{},n:{},gain:{},players:new Set(D?D.players:[]),n5:D?D.n5:0};
+  IDS.forEach(p=>{base.w[p]=D&&D.w[p]||0;base.n[p]=D&&D.n[p]||0;base.gain[p]=D&&D.gain[p]||0});
+  for(let it=0;it<iters;it++){
+    const e={...C.strength},w={...base.w},n={...base.n},gain={...base.gain},pl=new Set(base.players);
+    for(const g of rest){const ex=expct(avg(e,g.t1),avg(e,g.t2)),win1=Math.random()<ex,d=K*((win1?1:0)-ex);
+      for(const p of g.t1){e[p]+=d;gain[p]+=d;n[p]++;if(win1)w[p]++;pl.add(p)}
+      for(const p of g.t2){e[p]-=d;gain[p]-=d;n[p]++;if(!win1)w[p]++;pl.add(p)}}
+    const Dsim={players:pl,w,n,gain:{}};pl.forEach(p=>Dsim.gain[p]=gain[p]);
+    const r=dayRank(Dsim);if(r.length&&r[0].ok)counts[r[0].p]++;
+  }
+  return{counts,iters,rest:rest.length};
+}
+
+function simulateTour(C,rounds,iters=1500){
+  if(!C.games.length&&!rounds)return null;
+  const R=roundState(C);let rest=pendingGames(R).map(x=>({t1:x.t1,t2:x.t2}));
+  for(let i=1;i<=rounds;i++)rest=rest.concat(roundPlan(R.k+i).map(x=>({t1:x.t1,t2:x.t2})));
+  const counts={};IDS.forEach(p=>counts[p]=0);
+  for(let it=0;it<iters;it++){
+    const e={...C.strength},w={...C.w},n={...C.n};
+    for(const g of rest){const ex=expct(avg(e,g.t1),avg(e,g.t2)),win1=Math.random()<ex,d=K*((win1?1:0)-ex);
+      g.t1.forEach(p=>{e[p]+=d;n[p]++;if(win1)w[p]++});g.t2.forEach(p=>{e[p]-=d;n[p]++;if(!win1)w[p]++})}
+    const need=minNeeded(Math.max(...IDS.map(p=>n[p])));
+    const top=IDS.filter(p=>n[p]>=need).sort((a,b)=>(liga(w[b],n[b])-liga(w[a],n[a]))||(w[b]-w[a])||(e[b]-e[a]))[0];
+    if(top)counts[top]++}
+  return{counts,iters,rest:rest.length};
+}
+
+/* ---------- Ansichten ---------- */
+function gameRow(x,C,{next,ref}={}){
+  if(x.game){const g=x.game,win1=g.s1>g.s2;
+    return `<div class="game done"><div class="${win1?"won":""}">${duo(g.t1)}</div><div class="vs"><span class="score">${g.s1}:${g.s2}</span></div><div class="r ${win1?"":"won"}">${duo(g.t2,"r")}</div>
+      <div class="gmeta">${ref?`${av(ref,"sm")} ${esc(nameOf(ref))} hat gepfiffen`:"Runde zu viert"}<span style="margin-left:auto" class="pill good">gespielt</span></div></div>`}
+  const e=expct(avg(C.strength,x.t1),avg(C.strength,x.t2));
+  return `<button class="game ${next?"next":""}" data-act="enter" data-slot="${x.slot}" ${S.canWrite?"":"disabled"}>
+    <div>${duo(x.t1)}</div><div class="vs">gegen</div><div class="r">${duo(x.t2,"r")}</div>
+    <div class="gmeta">${ref?`${av(ref,"sm")} <span>${esc(nameOf(ref))} pfeift</span>`:""}
+      <span style="margin-left:auto">${pct(e)}</span><span class="chance" style="max-width:110px"><i style="width:${e*100}%"></i><b></b></span><span>${pct(1-e)}</span></div>
+  </button>`;
+}
+function viewPlay(C){
+  const R=roundState(C);let h="";const at=activeTour();
+  h+=at?`<div class="ctx"><div><div class="eyebrow">Turnier läuft</div><strong>${esc(tourName(at))}</strong><span class="muted small">${C.games.length} Spiele · seit ${dateLabel(S.tours[at].start)}</span></div><button class="btn ghost" data-act="tab" data-tab="tours">Details</button></div>`
+    :`<div class="ctx"><div><div class="eyebrow">Freies Spiel</div><strong>Kein Turnier aktiv</strong><span class="muted small">Spiele zählen nur für die ewige Tabelle.</span></div><button class="btn pri" data-act="newtour" ${S.canWrite?"":"disabled"}>Turnier starten</button></div>`;
+  if(!C.all.length)h+=`<h2>So wird gewertet</h2><p class="lead-p">Eine Wertung für alles: ewige Tabelle, Turniere und Tagessieger.</p>${explainHTML()}`;
+  {const nx=R.fourGames?R.fourGames.find(x=>!x.game):R.games.find(x=>!x.game);
+   if(nx){const e=expct(avg(C.strength,nx.t1),avg(C.strength,nx.t2));
+    h+=`<h2>Nächstes Spiel</h2><div class="hero"><div class="eyebrow">${R.fourGames?"Runde zu viert":"Runde "+(R.k+1)+" · Spiel "+(nx.slot+1)+" von 5"}</div>
+     <div class="match"><div class="team"><span class="avs">${av(nx.t1[0],"xl")}${av(nx.t1[1],"xl")}</span><span class="nm">${esc(nameOf(nx.t1[0]))}<br>${esc(nameOf(nx.t1[1]))}</span><span class="pc ${e>=.5?"fav":""}">${pct(e)}</span></div>
+     <div class="vsbig">VS</div>
+     <div class="team"><span class="avs">${av(nx.t2[0],"xl")}${av(nx.t2[1],"xl")}</span><span class="nm">${esc(nameOf(nx.t2[0]))}<br>${esc(nameOf(nx.t2[1]))}</span><span class="pc ${e<.5?"fav":""}">${pct(1-e)}</span></div></div>
+     <div class="chance"><i style="width:${e*100}%"></i><b></b></div>
+     <div class="ref">${nx.ref?`${av(nx.ref,"sm")} <span><strong style="color:var(--fg)">${esc(nameOf(nx.ref))}</strong> setzt aus und pfeift</span>`:`<span>Siegchance laut Elo</span>`}</div>
+     <button class="btn pri wide" data-act="enter" data-slot="${nx.slot}" ${S.canWrite?"":"disabled"}>Ergebnis eintragen</button></div>`}}
+  if(R.fourGames){
+    h+=`<h2>Runde zu viert</h2><p class="muted small" style="margin:-4px 0 10px">${esc(nameOf(R.four.absent))} fehlt. Jeder spielt einmal mit jedem. Zählt ganz normal für Quote und Elo.</p><div class="stack">`;
+    const first=R.fourGames.find(x=>!x.game);
+    R.fourGames.forEach(x=>h+=gameRow(x,C,{next:x===first}));
+    h+=`</div><div class="btns" style="margin-top:10px"><button class="btn ghost" data-act="endfour" ${S.canWrite?"":"disabled"}>Runde zu viert beenden</button></div>
+    <p class="muted small">Danach geht es mit Runde ${R.k+1} zu fünft weiter.</p>`;
+  }else{
+    const done=R.games.filter(x=>x.game).length,first=R.games.find(x=>!x.game);
+    h+=`<h2>Runde ${R.k+1} im Überblick</h2><div class="row small muted" style="margin:-6px 0 12px;flex-wrap:wrap"><span>Variante ${R.k%6+1} von 6</span><span>·</span><span>${done} von 5 gespielt</span><span>·</span><span>Wer aussetzt, pfeift</span></div><div class="stack">`;
+    R.games.forEach(x=>h+=gameRow(x,C,{next:x===first,ref:x.ref}));
+    h+=`</div><div class="btns" style="margin-top:10px"><button class="btn ghost" data-act="four" ${S.canWrite?"":"disabled"}>Einer fehlt? Runde zu viert</button></div>`;
+  }
+  /* Simulation */
+  const sim=simulate(C,R,S.simExtra);
+  const today=spieltag(Date.now()),D=C.days.find(d=>d.key===today),n5=D?D.n5:0;
+  h+=`<h2>Wer wird Tagessieger?</h2><p class="lead-p">${at?"Im Turnier "+esc(tourName(at)):"In der ewigen Tabelle"}, nach Siegquote des Tages.</p><div class="card"><div class="chips" role="group" aria-label="Wie viel wird heute noch gespielt">
+    ${[[0,"Rest der Runde"],[1,"+1 Runde"],[2,"+2 Runden"]].map(([v,l])=>`<button class="chip" data-act="sim" data-v="${v}" aria-pressed="${S.simExtra===v}">${l}</button>`).join("")}</div>`;
+  if(!sim)h+=`<p class="muted small">Sobald heute gespielt wird, rechnet die App hier die Chancen aus.</p>`;
+  else{const mx=Math.max(...Object.values(sim.counts),1);
+    h+=`<div class="bars" style="margin-top:12px">${IDS.slice().sort((a,b)=>sim.counts[b]-sim.counts[a]).map(p=>`<div class="bar">${av(p,"sm")}<span>${esc(nameOf(p))}</span><span class="track"><span class="fill" style="display:block;width:${sim.counts[p]/mx*100}%;--pc:var(--p-${p})"></span></span><span class="v">${pct(sim.counts[p]/sim.iters)}</span></div>`).join("")}</div>
+    <p class="muted small" style="margin:10px 0 0">${fmt(sim.iters)} Tage durchgespielt, mit ${sim.rest} offenen Spielen und den heutigen Ergebnissen.</p>`}
+  h+=`</div>`;
+  return h;
+}
+function voteBox(target){
+  const T=target==="all"?null:S.tours[target];const votes=(T?T.votes:S.settings.votes)||{};
+  const locked=isLocked(target),cur=T?tourMode(T):ewigMode(),c=tally(votes),n=Object.keys(votes).filter(p=>IDS.includes(p)).length;
+  const voters=k=>IDS.filter(p=>votes[p]===k).map(p=>av(p,"sm")).join("");
+  if(locked)return `<div class="card"><div class="row"><span class="pill acc">Festgelegt</span><strong>${MODES[cur].name}-Wertung</strong></div>
+    <p class="muted small" style="margin:8px 0 0">${MODES[cur].desc}</p>${n?`<div class="row" style="margin-top:10px;flex-wrap:wrap">${PREF.map(k=>c[k]?`<span class="vtag">${MODES[k].name} ${c[k]}<span class="avs">${voters(k)}</span></span>`:"").join("")}</div>`:""}</div>`;
+  return `<p class="lead-p">Die Mehrheit entscheidet: Sobald 3 von 5 dieselbe Wertung wählen, steht sie fest. Wird vorher schon das erste Ergebnis eingetragen, gilt die Wertung mit den meisten Stimmen (bei Gleichstand Kombi). ${n} von 5 haben abgestimmt.</p>
+  <div class="modes" role="group" aria-label="Abstimmung Wertung">${PREF.map(k=>`<button class="mode" data-act="vote" data-target="${esc(target)}" data-v="${k}" aria-pressed="${S.me&&votes[S.me]===k}" ${S.canWrite?"":"disabled"}><span class="dot"></span><div style="flex:1;min-width:0"><strong>${MODES[k].name}${k===cur&&n?' <span class="pill">vorne</span>':""}</strong><span>${MODES[k].desc}</span><br><span class="formula">${MODES[k].f}</span>
+    <div class="vrow"><span class="vbar"><i style="width:${c[k]/5*100}%"></i></span><span class="small"><strong style="color:var(--fg)">${c[k]}</strong> / 3 nötig</span><span class="avs">${voters(k)}</span></div></div></button>`).join("")}</div>
+  ${S.me?`<p class="note">Du stimmst als ${esc(nameOf(S.me))} ab. Deine Stimme kannst du bis zur Entscheidung ändern.</p>`:`<p class="note">Beim ersten Tippen fragt die App, wer du bist.</p>`}`;
+}
+function scopeBar(C){
+  const ids=Object.keys(S.tours).sort((a,b)=>(S.tours[b].start||0)-(S.tours[a].start||0));
+  return `<div class="scopes" role="tablist" aria-label="Wertung anzeigen für">${[["all","Ewige Tabelle"],...ids.map(id=>[id,tourName(id)])].map(([id,l])=>`<button class="chip" data-act="scope" data-id="${esc(id)}" aria-pressed="${C.scope===id}">${id!=="all"&&!S.tours[id].end?'<i class="livedot"></i>':""}${esc(l)}</button>`).join("")}</div>`;
+}
+function scopeTitle(C){return C.tour?esc(tourName(C.scope)):"Ewige Tabelle"}
+function viewTable(C){
+  let h=scopeBar(C)+`<h2>${scopeTitle(C)}</h2><p class="lead-p">${C.tour?`${C.tour.end?"Beendet":"Läuft"} · ${esc(C.tour.theme||"Turnier")} · `:"Alle Spiele seit Beginn · "}${C.games.length} Spiele</p>`;
+  if(!C.games.length)return h+`<div class="empty">Noch keine Spiele. Trag unter „Spielen" das erste Ergebnis ein, dann füllt sich die Tabelle.</div>`;
+  h+=`<div class="card"><div class="tw"><table><thead><tr><th>Spieler</th><th>Quote</th><th>S/Sp</th><th>Elo</th><th>Tage</th></tr></thead><tbody>`;
+  C.table.forEach((r,i)=>{h+=`<tr class="${i===0&&r.ok?"lead":""}" style="${r.ok?"":"opacity:.55"}"><td><div class="row"><span class="rank">${r.ok?i+1:"–"}</span>${av(r.p)}<span>${esc(nameOf(r.p))}</span>${r.tie?' <span class="pill">Entscheidungsspiel</span>':""}</div></td>
+    <td class="main">${r.n?fmt(r.score*100,1)+" %":"–"}</td><td>${r.w}/${r.n}</td><td>${Math.round(r.elo)}</td><td>${r.dayWins||"–"}</td></tr>`});
+  h+=`</tbody></table></div><p class="muted small" style="margin:8px 0 0"><strong style="color:var(--fg)">Quote</strong> = Siege ÷ Spiele. Gewertet wird, wer mindestens ${C.need} Spiele hat (ein Drittel des Fleißigsten, mindestens ${MINGAMES}). Gleichstand: mehr Siege, dann direkter Vergleich, dann Elo. <strong style="color:var(--fg)">Tage</strong> = Tagessiege.</p></div>`;
+  /* Heute */
+  const today=spieltag(Date.now()),D=C.days.find(d=>d.key===today);
+  if(!C.tour||!C.tour.end){h+=`<h2>Heute</h2>`;
+  if(!D)h+=`<div class="empty">Heute wurde noch nicht gespielt.</div>`;
+  else{h+=`<div class="card"><div class="tw"><table><thead><tr><th>Spieler</th><th>Quote</th><th>S/Sp</th><th>Elo heute</th></tr></thead><tbody>`;
+    D.rank.forEach((r,i)=>h+=`<tr class="${i===0&&r.ok?"lead":""}" style="${r.ok?"":"opacity:.55"}"><td><div class="row"><span class="rank">${r.ok?i+1:"–"}</span>${av(r.p)}<span>${esc(nameOf(r.p))}</span></div></td><td class="main">${fmt(r.score*100,1)} %</td><td>${r.w}/${r.n}</td><td>${sign(r.gain)}</td></tr>`);
+    h+=`</tbody></table></div><p class="muted small" style="margin:8px 0 0">Tagessieger wird, wer heute die beste Quote hat. Gewertet wird, wer mindestens ${MINGAMES} Spiele und ein Drittel der Spiele des Fleißigsten gemacht hat.</p></div>`}}
+  /* Tagessieger */
+  const past=C.days.filter(d=>d.rank.length&&d.rank[0].ok).reverse();
+  if(past.length){h+=`<h2>Tagessieger</h2><div class="card hist">`;
+    past.forEach(d=>{const r=d.rank[0];h+=`<div class="h"><span style="min-width:72px">${dayLabel(d.key)}</span>${av(r.p,"sm")}<strong>${esc(nameOf(r.p))}</strong><span class="muted">${r.w} von ${r.n} gewonnen</span><span style="margin-left:auto" class="muted">${d.games.length} Spiele</span></div>`});
+    h+=`</div>`}
+  /* Dream-Team */
+  const ds=C.duos.slice().sort((a,b)=>(b.n>=3)-(a.n>=3)||b.w/b.n-a.w/a.n||b.n-a.n);
+  h+=`<h2>Dream-Team</h2><div class="card hist">`;
+  ds.forEach((d,i)=>{const ok=d.n>=3;h+=`<div class="h" style="${ok?"":"opacity:.55"}">${duo(d.t)}<span style="margin-left:auto">${d.w}/${d.n}</span><strong style="min-width:48px;text-align:right">${pct(d.w/d.n)}</strong>${i===0&&ok?'<span class="pill acc">Dream-Team</span>':""}</div>`});
+  if(!ds.length)h+=`<p class="muted small" style="margin:0">Noch keine Duos gespielt.</p>`;
+  h+=`</div><p class="muted small">Gewertet ab 3 gemeinsamen Spielen.</p>`;
+  return h;
+}
+function eloChart(C){
+  const H=C.hist;if(H.length<2)return`<div class="empty">Die Kurve erscheint nach dem ersten Spiel.</div>`;
+  let lo=1000,hi=1000;H.forEach(r=>IDS.forEach(p=>{lo=Math.min(lo,r[p]);hi=Math.max(hi,r[p])}));
+  lo=Math.floor((lo-10)/25)*25;hi=Math.ceil((hi+10)/25)*25;
+  const W=640,Ht=240,pl=40,pr=10,pt=10,pb=24,x=i=>pl+(W-pl-pr)*i/(H.length-1),y=v=>pt+(Ht-pt-pb)*(1-(v-lo)/(hi-lo));
+  let s=`<svg viewBox="0 0 ${W} ${Ht}" width="100%" style="min-width:420px" role="img" aria-label="Elo-Verlauf aller Spieler">`;
+  const step=(hi-lo)>150?50:25;
+  for(let v=lo;v<=hi;v+=step)s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${v===1000?1.5:.8}" ${v===1000?"":'stroke-dasharray="3 4"'}/><text x="${pl-6}" y="${y(v)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${v}</text>`;
+  s+=`<text x="${W-pr}" y="${Ht-6}" font-size="11" text-anchor="end" fill="var(--muted)">Spiel ${H.length-1}</text><text x="${pl}" y="${Ht-6}" font-size="11" fill="var(--muted)">Start</text>`;
+  IDS.forEach(p=>{s+=`<polyline fill="none" stroke="var(--p-${p})" stroke-width="2.4" stroke-linejoin="round" points="${H.map((r,i)=>x(i).toFixed(1)+","+y(r[p]).toFixed(1)).join(" ")}"/><circle cx="${x(H.length-1)}" cy="${y(H[H.length-1][p])}" r="4" fill="var(--p-${p})"/>`});
+  s+=`</svg>`;
+  return `<div class="chartwrap">${s}</div><div class="legend">${IDS.map(p=>`<span style="--pc:var(--p-${p})"><i></i>${esc(nameOf(p))} ${Math.round(C.elo[p])}</span>`).join("")}</div>`;
+}
+function gameTxt(g){return `${esc(nameOf(g.t1[0]))} + ${esc(nameOf(g.t1[1]))} <strong>${g.s1}:${g.s2}</strong> ${esc(nameOf(g.t2[0]))} + ${esc(nameOf(g.t2[1]))}`}
+function heat(q){const pc=Math.round(Math.abs(q-.5)*160);return `background:color-mix(in srgb,var(${q>=.5?"--good":"--bad"}) ${pc}%,var(--surface))`}
+function viewStats(C){
+  const G=C.games;
+  let h=scopeBar(C)+`<h2>${scopeTitle(C)}: Überblick</h2><div class="tiles">`;
+  const pts=G.reduce((s,g)=>s+g.s1+g.s2,0),cl=G.filter(g=>Math.abs(g.s1-g.s2)===2).length;
+  [[G.length,"Spiele"],[C.days.length,"Spieltage"],[fmt(pts),"Ballwechsel gewonnen"],[G.length?pct(cl/G.length):"–","knappe Spiele"]].forEach(([v,l])=>h+=`<div class="tile"><b>${v}</b><span>${l}</span></div>`);
+  h+=`</div>`;
+  h+=`<h2>Elo-Verlauf</h2><div class="card">${eloChart(C)}<p class="muted small" style="margin:8px 0 0">${C.tour?"Elo-Gewinn in diesem Turnier, Start bei 1000.":"Alle Spiele seit Beginn."} Wer gegen starke Duos gewinnt, steigt schneller.</p></div>`;
+  if(!G.length)return h;
+  /* Rekorde */
+  const R=C.rec,bs=IDS.slice().sort((a,b)=>C.best[b]-C.best[a])[0],pk=IDS.slice().sort((a,b)=>C.peak[b]-C.peak[a])[0],dw=IDS.slice().sort((a,b)=>C.dayWins[b]-C.dayWins[a])[0];
+  h+=`<h2>Rekorde</h2><div class="card hist">
+   <div class="h"><span class="rl">Längste Siegesserie</span>${av(bs,"sm")}<strong>${esc(nameOf(bs))}</strong><span class="muted" style="margin-left:auto">${C.best[bs]} Siege</span></div>
+   <div class="h"><span class="rl">Höchstes Elo</span>${av(pk,"sm")}<strong>${esc(nameOf(pk))}</strong><span class="muted" style="margin-left:auto">${Math.round(C.peak[pk])}</span></div>
+   <div class="h"><span class="rl">Meiste Tagessiege</span>${av(dw,"sm")}<strong>${esc(nameOf(dw))}</strong><span class="muted" style="margin-left:auto">${C.dayWins[dw]}</span></div>
+   <div class="h"><span class="rl">Höchster Sieg</span><span>${gameTxt(R.big.g)}</span></div>
+   <div class="h"><span class="rl">Längstes Spiel</span><span>${gameTxt(R.long.g)}</span></div>
+   ${R.upset?`<div class="h"><span class="rl">Größte Überraschung</span><span>${esc(nameOf(R.upset.t[0]))} + ${esc(nameOf(R.upset.t[1]))} gewinnen mit nur ${pct(R.upset.ex)} Siegchance</span></div>`:""}
+   <div class="h"><span class="rl">Größter Elo-Sprung</span><span>${esc(nameOf(R.jump.t[0]))} + ${esc(nameOf(R.jump.t[1]))} je ${sign(Math.abs(R.jump.d))}</span></div>
+  </div>`;
+  /* Spieler */
+  const top=IDS.slice().sort((a,b)=>C.elo[b]-C.elo[a])[0];
+  h+=`<h2>Spieler</h2><div class="grid2">`;
+  IDS.forEach(p=>{
+    const q=(x,y,o)=>o[x][y].w/o[x][y].n;
+    const partners=IDS.filter(x=>x!==p&&C.pw[p][x].n>=2).sort((a,b)=>q(p,b,C.pw)-q(p,a,C.pw));
+    const opps=IDS.filter(x=>x!==p&&C.h2h[p][x].n>=3).sort((a,b)=>q(p,a,C.h2h)-q(p,b,C.h2h));
+    const lp=partners[0],ag=opps[0],lg=opps[opps.length-1],st=C.streak[p],nn=C.n[p];
+    const last=C.form[p].slice(-8);
+    h+=`<div class="card"><div class="row">${av(p,"lg")}<div><h3 style="margin:0">${esc(nameOf(p))}</h3><span class="muted small">${C.w[p]} von ${nn} gewonnen${nn?" · "+pct(C.w[p]/nn):""}</span></div>${p===top&&nn?'<span class="pill acc" style="margin-left:auto">Stärkster</span>':""}</div>
+    ${last.length?`<div class="form" aria-label="Form der letzten Spiele">${last.map(x=>`<i class="${x?"w":"l"}">${x?"S":"N"}</i>`).join("")}<span class="muted small">letzte ${last.length}</span></div>`:""}
+    <dl class="kv">
+    <dt>Lieblingspartner</dt><dd>${lp?`${esc(nameOf(lp))} · ${C.pw[p][lp].w}/${C.pw[p][lp].n}`:"–"}</dd>
+    <dt>Lieblingsgegner</dt><dd>${lg&&lg!==ag?`${esc(nameOf(lg))} · ${C.h2h[p][lg].w}/${C.h2h[p][lg].n} Siege`:"–"}</dd>
+    <dt>Angstgegner</dt><dd>${ag?`${esc(nameOf(ag))} · ${C.h2h[p][ag].w}/${C.h2h[p][ag].n} Siege`:"–"}</dd>
+    <dt>Ø Punkte pro Spiel</dt><dd>${nn?fmt(C.pf[p]/nn,1)+" : "+fmt(C.pa[p]/nn,1):"–"}</dd>
+    <dt>Höchster Sieg</dt><dd>${C.big[p]?`${C.big[p].g.s1>C.big[p].g.s2?C.big[p].g.s1+":"+C.big[p].g.s2:C.big[p].g.s2+":"+C.big[p].g.s1}`:"–"}</dd>
+    <dt>Bitterste Niederlage</dt><dd>${C.worst[p]?`${Math.min(C.worst[p].g.s1,C.worst[p].g.s2)}:${Math.max(C.worst[p].g.s1,C.worst[p].g.s2)}`:"–"}</dd>
+    <dt>Knappe Spiele</dt><dd>${C.closeN[p]?`${C.close[p]}/${C.closeN[p]} gewonnen`:"–"}</dd>
+    <dt>Außenseitersiege</dt><dd>${C.ups[p]||"–"}</dd>
+    <dt>Längste Siegesserie</dt><dd>${C.best[p]||"–"}</dd>
+    <dt>Aktuell</dt><dd>${st>0?st+" Siege in Folge":st<0?(-st)+" Niederlagen in Folge":"–"}</dd>
+    <dt>Tagessiege</dt><dd>${C.dayWins[p]||"–"}</dd>
+    <dt>Elo jetzt / Bestwert</dt><dd>${Math.round(C.elo[p])} / ${Math.round(C.peak[p])}</dd>
+    <dt>Als Schiri</dt><dd>${C.refN[p]||"–"}</dd></dl></div>`});
+  h+=`</div>`;
+  /* Partner-Matrix */
+  h+=`<h2>Zusammen stark?</h2><div class="card"><div class="tw"><table class="mx"><thead><tr><th></th>${IDS.map(x=>`<th>${av(x,"sm")}</th>`).join("")}</tr></thead><tbody>`;
+  IDS.forEach(p=>{h+=`<tr><th class="l">${esc(nameOf(p))}</th>${IDS.map(x=>{if(x===p)return`<td class="self"></td>`;const o=C.pw[p][x];return o.n?`<td style="${heat(o.w/o.n)}">${pct(o.w/o.n)}<br><span class="muted small">${o.w}/${o.n}</span></td>`:`<td>–</td>`}).join("")}</tr>`});
+  h+=`</tbody></table></div><p class="muted small" style="margin:8px 0 0">Siegquote, wenn beide zusammen spielen. Grün läuft, rot eher nicht.</p></div>`;
+  /* Direkter Vergleich */
+  h+=`<h2>Direkter Vergleich</h2><div class="card"><div class="tw"><table class="mx"><thead><tr><th></th>${IDS.map(q=>`<th>${av(q,"sm")}</th>`).join("")}</tr></thead><tbody>`;
+  IDS.forEach(p=>{h+=`<tr><th class="l">${esc(nameOf(p))}</th>${IDS.map(q=>{if(q===p)return`<td class="self"></td>`;const a=C.h2h[p][q].w,b=C.h2h[q][p].w;return a+b?`<td style="${heat(a/(a+b))}">${a}:${b}</td>`:`<td>–</td>`}).join("")}</tr>`});
+  h+=`</tbody></table></div><p class="muted small" style="margin:8px 0 0">Siege der Zeile gegen die Spalte, wenn beide gegeneinander gespielt haben.</p></div>`;
+  /* Spieltage */
+  h+=`<h2>Spieltage</h2><div class="card"><div class="tw"><table><thead><tr><th>Tag</th><th>Spiele</th>${IDS.map(x=>`<th>${av(x,"sm")}</th>`).join("")}</tr></thead><tbody>`;
+  C.days.slice().reverse().forEach(d=>{h+=`<tr><td>${dayLabel(d.key)}</td><td>${d.games.length}</td>${IDS.map(x=>d.n[x]?`<td style="${heat(d.w[x]/d.n[x])}">${d.w[x]}/${d.n[x]}${d.rank[0].p===x?" ★":""}</td>`:`<td class="muted">–</td>`).join("")}</tr>`});
+  h+=`</tbody></table></div><p class="muted small" style="margin:8px 0 0">Siege pro Tag, ★ = Tagessieger.</p></div>`;
+  return h;
+}
+function viewFinal(C){
+  const id=C.scope,T=C.tour;if(!T)return"";
+  let h=`<h3 style="margin-top:16px">Fun-Finale</h3><p class="muted small" style="margin:0 0 10px">Zum Abschluss des Turniers: Platz 1 und 4 gegen Platz 2 und 3, Platz 5 pfeift. Bis 21, zählt nicht in die Wertung.</p>`;
+  const t=C.table.filter(r=>r.ok);if(t.length<5)return h+`<div class="empty">Die Paarung steht fest, sobald alle fünf im Turnier gespielt haben.</div>`;
+  const f=T.finale&&isGame({...T.finale})?T.finale:null;
+  const t1=f?f.t1:[t[0].p,t[3].p],t2=f?f.t2:[t[1].p,t[2].p],ref=f?f.ref:t[4].p;
+  h+=`<div class="finale"><div>${duo(t1)}</div><div class="vs">${f?`<span class="score">${f.s1}:${f.s2}</span>`:"gegen"}</div><div style="display:flex;justify-content:flex-end">${duo(t2,"r")}</div></div>
+  <p class="small muted" style="margin:10px 0 0">${av(ref,"sm")} ${esc(nameOf(ref))} pfeift.</p>`;
+  if(f){const win=f.s1>f.s2?f.t1:f.t2;h+=`<p style="margin:10px 0 0"><span class="pill acc">Finalsieger</span> <strong>${esc(nameOf(win[0]))} + ${esc(nameOf(win[1]))}</strong></p>`}
+  h+=`<div class="btns" style="margin-top:12px"><button class="btn ${f?"ghost":"pri"}" data-act="finale" data-tour="${esc(id)}" data-t1="${t1.join("")}" data-t2="${t2.join("")}" data-ref="${ref}" ${S.canWrite?"":"disabled"}>${f?"Ergebnis ändern":"Finale eintragen"}</button>${f?`<button class="btn ghost" data-act="finalreset" data-tour="${esc(id)}" ${S.canWrite?"":"disabled"}>Neu auslosen</button>`:""}</div>`;
+  return h;
+}
+function tourDash(C,id){
+  const tw=IDS.slice().sort((a,b)=>C.dayWins[b]-C.dayWins[a])[0],ds=C.duos.filter(d=>d.n>=3).sort((a,b)=>b.w/b.n-a.w/a.n||b.n-a.n)[0];
+  let h=`<h3 style="margin-top:18px">Live-Tabelle</h3><div class="tw"><table><thead><tr><th>Spieler</th><th>Quote</th><th>S/Sp</th><th>Tage</th></tr></thead><tbody>`;
+  C.table.forEach((r,i)=>h+=`<tr class="${i===0&&r.ok?"lead":""}" style="${r.ok?"":"opacity:.55"}"><td><div class="row"><span class="rank">${r.ok?i+1:"–"}</span>${av(r.p,"sm")}<span>${esc(nameOf(r.p))}</span></div></td><td class="main">${r.n?fmt(r.score*100,1)+" %":"–"}</td><td>${r.w}/${r.n}</td><td>${r.dayWins||"–"}</td></tr>`);
+  h+=`</tbody></table></div><p class="muted small" style="margin:6px 0 0">Gewertet ab ${C.need} Spielen.</p>
+   <div class="tiles" style="margin-top:14px"><div class="tile"><b>${C.games.length}</b><span>Spiele</span></div><div class="tile"><b>${C.days.length}</b><span>Spieltage</span></div>
+   <div class="tile"><b>${C.dayWins[tw]?esc(nameOf(tw)):"–"}</b><span>meiste Tagessiege${C.dayWins[tw]?" ("+C.dayWins[tw]+")":""}</span></div>
+   <div class="tile"><b style="font-size:18px">${ds?esc(nameOf(ds.t[0]))+" + "+esc(nameOf(ds.t[1])):"–"}</b><span>Dream-Team${ds?" ("+pct(ds.w/ds.n)+")":""}</span></div></div>`;
+  const sim=simulateTour(C,S.tourExtra);
+  h+=`<h3 style="margin-top:18px">Wer gewinnt das Turnier?</h3><div class="chips" role="group" aria-label="Wie viele Runden noch">${[[2,"noch 2 Runden"],[5,"noch 5"],[10,"noch 10"]].map(([v,l])=>`<button class="chip" data-act="tourx" data-v="${v}" aria-pressed="${S.tourExtra===v}">${l}</button>`).join("")}</div>`;
+  if(sim){const mx=Math.max(...Object.values(sim.counts),1);h+=`<div class="bars" style="margin-top:12px">${IDS.slice().sort((a,b)=>sim.counts[b]-sim.counts[a]).map(p=>`<div class="bar">${av(p,"sm")}<span>${esc(nameOf(p))}</span><span class="track"><span class="fill" style="display:block;width:${sim.counts[p]/mx*100}%;--pc:var(--p-${p})"></span></span><span class="v">${pct(sim.counts[p]/sim.iters)}</span></div>`).join("")}</div>
+   <p class="muted small" style="margin:8px 0 0">${fmt(sim.iters)} mögliche Turnierverläufe mit ${sim.rest} weiteren Spielen, Siegchancen laut Elo.</p>`}
+  h+=`<div class="btns" style="margin-top:14px"><button class="btn ghost" data-act="scope" data-id="${esc(id)}" data-go="table">Ganze Tabelle</button><button class="btn ghost" data-act="scope" data-id="${esc(id)}" data-go="stats">Turnier-Statistik</button></div>`;
+  return h;
+}
+function champ(id){const C=compute(id);const r=C.table[0];return r&&r.ok?{p:r.p,C}:{p:null,C}}
+function viewTours(){
+  const at=activeTour();let h="";
+  if(at){const {p,C}=champ(at),T=S.tours[at];
+    h+=`<h2>Laufendes Turnier</h2><div class="hero"><div class="eyebrow">${esc(T.theme||"Turnier")} · seit ${dateLabel(T.start)}</div>
+     <h3 style="font-size:24px;margin:6px 0 2px">${esc(tourName(at))}</h3><p class="muted small" style="margin:0">${C.games.length} Spiele · ${C.days.length} Spieltage</p>
+     ${p?`<div class="row" style="margin-top:14px">${av(p,"lg")}<div><div class="eyebrow">Führt gerade</div><strong style="font-size:17px">${esc(nameOf(p))}</strong></div></div>`:`<p class="muted small" style="margin-top:12px">Noch keine Spiele in diesem Turnier. Jedes Ergebnis, das ihr unter „Spielen" eintragt, zählt ab jetzt hier.</p>`}
+     ${C.games.length?tourDash(C,at):""}
+     ${viewFinal(C)}
+     <div class="btns" style="margin-top:16px">${S.confirmEnd?`<button class="btn danger" data-act="endtour" ${S.canWrite?"":"disabled"}>Ja, Turnier beenden</button><button class="btn ghost" data-act="endno">Abbrechen</button>`:`<button class="btn ghost" data-act="endask" ${S.canWrite?"":"disabled"}>Turnier beenden</button>`}</div>
+     ${S.confirmEnd?`<p class="small muted" style="margin:8px 0 0">Danach zählen neue Spiele nur noch für die ewige Tabelle, bis ihr ein neues Turnier startet.</p>`:""}</div>`;}
+  else h+=`<h2>Turniere</h2><p class="lead-p">Ein Turnier ist ein eigener Wettbewerb, etwa für einen Urlaub oder einen Geburtstag, mit eigener Wertung, eigenem Sieger und eigenem Fun-Finale. Alle Spiele zählen trotzdem weiter für die ewige Tabelle.</p>
+    <button class="btn pri wide" data-act="newtour" ${S.canWrite?"":"disabled"}>Neues Turnier starten</button>`;
+  const past=Object.keys(S.tours).filter(id=>S.tours[id].end).sort((a,b)=>S.tours[b].start-S.tours[a].start);
+  h+=`<h2>Ruhmeshalle</h2>`;
+  if(!past.length)h+=`<div class="empty">Hier erscheinen beendete Turniere mit ihren Siegern.</div>`;
+  else{h+=`<div class="stack">`;past.forEach(id=>{const T=S.tours[id],{p,C}=champ(id);const f=T.finale&&isGame({...T.finale})?T.finale:null,fw=f?(f.s1>f.s2?f.t1:f.t2):null;
+    h+=`<button class="tourcard" data-act="scope" data-id="${esc(id)}" data-go="table"><div class="trophy">${p?av(p,"lg"):'<span class="av lg" style="--pc:var(--line2)">?</span>'}</div><div style="min-width:0"><div class="eyebrow">${esc(T.theme||"Turnier")} · ${dateLabel(T.start)}${T.end?" – "+dateLabel(T.end):""}</div>
+      <strong class="tn">${esc(tourName(id))}</strong><span class="muted small">${p?"Sieger: "+esc(nameOf(p)):"Ohne Spiele"} · ${C.games.length} Spiele${fw?" · Finale: "+esc(nameOf(fw[0]))+" + "+esc(nameOf(fw[1])):""}${(()=>{const d=C.duos.filter(d=>d.n>=3).sort((a,b)=>b.w/b.n-a.w/a.n||b.n-a.n)[0];return d?" · Dream-Team: "+esc(nameOf(d.t[0]))+" + "+esc(nameOf(d.t[1])):""})()}</span></div></button>`});
+    h+=`</div>`}
+  /* Ewig: Titel */
+  const titles={};IDS.forEach(x=>titles[x]=0);past.forEach(id=>{const {p}=champ(id);if(p)titles[p]++});
+  if(past.length){h+=`<h2>Turniersiege</h2><div class="card"><div class="bars">${IDS.slice().sort((a,b)=>titles[b]-titles[a]).map(x=>`<div class="bar">${av(x,"sm")}<span>${esc(nameOf(x))}</span><span class="track"><span class="fill" style="display:block;width:${titles[x]/Math.max(1,...Object.values(titles))*100}%;--pc:var(--p-${x})"></span></span><span class="v">${titles[x]}</span></div>`).join("")}</div></div>`}
+  return h;
+}
+function viewChat(C){
+  if(!S.me)return `<h2>Chat</h2><p class="lead-p">Wer bist du? Das merkt sich dieses Gerät, damit deine Nachrichten deinen Namen tragen.</p><div class="stack">${IDS.map(p=>`<button class="mode" data-act="me" data-p="${p}">${av(p)}<div><strong>${esc(nameOf(p))}</strong></div></button>`).join("")}</div>`;
+  const items=[];
+  S.chat.forEach(m=>{if(!m||typeof m.text!=="string"||!Number.isFinite(m.ts))return;if(m.sys)items.push({ts:m.ts,type:"sys",txt:m.text,by:m.by});else if(IDS.includes(m.by))items.push({ts:m.ts,type:"msg",m})});
+  const cut=items.length?Math.min(...items.map(i=>i.ts)):Date.now()-14*864e5;
+  C.all.filter(g=>g.ts>=cut-864e5).forEach(g=>items.push({ts:g.ts,type:"game",g}));
+  Object.entries(S.tours).forEach(([id,T])=>{if(T.start>=cut-864e5)items.push({ts:T.start,type:"tour",txt:`Turnier „${tourName(id)}" gestartet`});if(T.end&&T.end>=cut-864e5){const {p}=champ(id);items.push({ts:T.end,type:"tour",txt:`Turnier „${tourName(id)}" beendet${p?" · Sieger: "+nameOf(p):""}`})}});
+  items.sort((a,b)=>a.ts-b.ts);
+  let h=`<h2>Chat</h2><p class="lead-p">Du schreibst als ${av(S.me,"sm")} <strong style="color:var(--fg)">${esc(nameOf(S.me))}</strong> · <button class="linkbtn" data-act="meclear">ändern</button></p><div class="chat">`;
+  if(!items.length)h+=`<div class="empty">Noch ruhig hier. Schreib die erste Nachricht, Spielergebnisse erscheinen automatisch.</div>`;
+  let lastDay="";
+  items.forEach(it=>{const dk=dayKey(it.ts);if(dk!==lastDay){h+=`<div class="daysep"><span>${dayLabel(dk)}</span></div>`;lastDay=dk}
+    const tm=new Date(it.ts).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+    if(it.type==="sys"){h+=`<div class="evt warn">${IDS.includes(it.by)?av(it.by,"sm"):""}<span>${esc(it.txt)}</span><span class="tm">${tm}</span></div>`}
+    else if(it.type==="msg"){const mine=it.m.by===S.me;h+=`<div class="msg ${mine?"mine":""}">${mine?"":av(it.m.by,"sm")}<div class="bub"><span class="who" style="color:var(--p-${it.m.by})">${mine?"":esc(nameOf(it.m.by))}</span>${esc(it.m.text).replace(/\n/g,"<br>")}<span class="tm">${tm}</span></div></div>`}
+    else if(it.type==="game"){const g=it.g,w1=g.s1>g.s2;h+=`<div class="evt"><span>${esc(nameOf(g.t1[0]))} + ${esc(nameOf(g.t1[1]))}</span><strong class="${w1?"wn":""}">${g.s1}</strong><span>:</span><strong class="${w1?"":"wn"}">${g.s2}</strong><span>${esc(nameOf(g.t2[0]))} + ${esc(nameOf(g.t2[1]))}</span><span class="tm">${tm}</span></div>`}
+    else h+=`<div class="evt tour">${esc(it.txt)}<span class="tm">${tm}</span></div>`});
+  return h+`</div>`;
+}
+function viewMore(C){
+  let h=viewRules(C)+`<h2>Spieler</h2><div class="card">`;
+  IDS.forEach(p=>h+=`<div class="prow">${av(p,"lg")}<div style="min-width:0"><strong>${esc(nameOf(p))}</strong><div class="muted small">${C.n[p]} Spiele</div></div><label class="btn ghost" style="margin-left:auto;${S.canWrite?"":"display:none"}" for="ph-${p}">Profilbild</label><input type="file" accept="image/*" id="ph-${p}" data-photo="${p}" hidden></div>`);
+  h+=`<p class="muted small" style="margin:8px 0 0">Jeder kann sein Foto selbst hochladen. Es wird quadratisch zugeschnitten.</p></div>`;
+  h+=`<h2>Verlauf</h2><div class="card hist">`;
+  const gs=C.games.slice().reverse();
+  if(!gs.length)h+=`<p class="muted small" style="margin:0">Noch keine Spiele.</p>`;
+  gs.forEach(g=>{const id=g.id,c=S.confirmDel===id;h+=`<div class="h"><span class="muted" style="min-width:72px">${dayLabel(g.ts?spieltag(g.ts):g.day)}</span><span>${esc(nameOf(g.t1[0]))}+${esc(nameOf(g.t1[1]))}</span><strong>${g.s1}:${g.s2}</strong><span>${esc(nameOf(g.t2[0]))}+${esc(nameOf(g.t2[1]))}</span>${g.kind==="4"?'<span class="pill">zu viert</span>':""}${g.tour&&S.tours[g.tour]?`<span class="pill">${esc(tourName(g.tour))}</span>`:""}
+    ${S.canWrite?`<span style="margin-left:auto" class="btns">${c?`<button class="btn danger" style="padding:6px 10px" data-act="del" data-id="${esc(id)}">Löschen, alle werden informiert</button><button class="btn ghost" style="padding:6px 10px" data-act="delno">Abbrechen</button>`:`<button class="btn ghost" style="padding:6px 10px" data-act="delask" data-id="${esc(id)}">Löschen</button>`}</span>`:""}</div>`});
+  h+=`</div>`;
+  h+=`<p class="muted small">${S.mode==="live"?"Alle sehen denselben Spielstand, Änderungen kommen live an.":S.mode==="local"?"Dieser Spielstand liegt nur auf diesem Gerät.":"Nur Ansicht."}</p>`;
+  return h;
+}
+
+function acc(n,title,body,open){return `<details class="acc"${open?" open":""}><summary><span class="num">${n}</span>${title}</summary><div class="acc-b">${body}</div></details>`}
+function explainHTML(){
+  return acc("1","Die Wertung: Siegquote",`<p>Gewertet wird, wie oft jemand gewinnt:</p>
+   <div class="ex"><b>Wertung = Siege ÷ Spiele</b></div>
+   <div class="ex">Andi gewinnt 14 von 20: <b>70 %</b><br>Waldi gewinnt 9 von 12: <b>75 %</b>. Waldi liegt vorne, obwohl er weniger Siege hat.</div>
+   <p>Weil es eine Quote ist und keine Summe, wird niemand bestraft, der mal fehlt. Damit aber niemand mit drei Glückssiegen ganz vorne steht, gilt die <strong>Drittel-Regel</strong>:</p>
+   <div class="ex">Gewertet wird, wer mindestens <b>ein Drittel</b> so viele Spiele hat wie der Fleißigste, und mindestens <b>${MINGAMES}</b> Spiele (eine Runde).<br>Beispiel: Der Fleißigste hat 30 Spiele, also braucht jeder mindestens 10.</div>
+   <p>Wer darunter liegt, steht ausgegraut ohne Platz in der Tabelle und rückt automatisch auf, sobald er genug gespielt hat. Bei gleicher Quote liegt vorne, wer mehr Siege hat.</p>`,true)
+  +acc("2","Warum diese Wertung?",`<ul><li><strong>Reine Siege</strong> bestrafen jeden, der mal fehlt.</li>
+   <li><strong>Elo</strong> ist kaum nachvollziehbar und hängt von der Reihenfolge der Spiele ab.</li>
+   <li><strong>Punkte-Boni</strong> pro Tag wachsen über Jahre so stark an, dass sie die eigentliche Leistung überdecken.</li></ul>
+   <p>Die Siegquote kann jeder im Kopf nachrechnen und ist fair zu Abwesenden. Euer Rundenplan sorgt dafür, dass jeder gleich oft mit und gegen jeden spielt. Die Drittel-Regel verhindert Glückstreffer bei wenigen Spielen. In der Simulation mit tausenden Spielwochen hat diese Wertung den Besten genauso oft erkannt wie jede andere und war fair zu Abwesenden.</p>`)
+  +acc("3","Tagessieger, Turniere, ewige Tabelle",`<ul><li><strong>Tagessieger</strong> ist, wer an dem Tag die beste Siegquote hat, nach derselben Drittel-Regel. Tagessiege werden gezählt, aber nicht in Punkte umgerechnet.</li>
+   <li>Ein <strong>Turnier</strong> wertet genauso, nur mit seinen eigenen Spielen. Turniersieger ist, wer am Ende vorne liegt.</li>
+   <li>Die <strong>ewige Tabelle</strong> zählt jedes Spiel über alle Jahre.</li>
+   <li><strong>Gleichstand:</strong> mehr Siege, dann direkter Vergleich, dann Elo, notfalls ein Entscheidungsspiel.</li></ul>`)
+  +acc("4","Elo: die Stärke-Anzeige",`<p>Elo zählt nicht für Titel. Es zeigt, wie stark jemand gerade spielt, und liefert die Siegchancen vor jedem Spiel und die Tagessieg-Prognose.</p>
+   <p>Alle starten bei <strong>1000</strong>. Vor jedem Spiel wird aus dem Durchschnitt beider Duos eine Siegchance berechnet. Wer als Außenseiter gewinnt, bekommt viele Punkte, wer als Favorit gewinnt, wenige. Beide Partner bekommen dieselben Punkte.</p>
+   <div class="ex">Gleich starke Duos: <b>+16</b> / −16. Favorit mit 64 % gewinnt: <b>+12</b>. Außenseiter gewinnt: <b>+20</b>.</div>`);
+}
+function viewRules(C){
+  let h=`<h2>Unsere Regeln</h2><p class="lead-p">So spielen wir. Wo diese Regeln von den offiziellen abweichen, gelten unsere.</p>`;
+  h+=acc("1","Spielmodus und Runden",`<ul><li>Ein Satz bis <strong>11</strong>, gewonnen wird mit <strong>2 Punkten Vorsprung</strong>, ohne Obergrenze.</li>
+   <li>Eine Runde hat 5 Spiele. Jeder spielt einmal mit jedem und setzt einmal aus.</li><li>Wer aussetzt, pfeift das Spiel und trägt das Ergebnis ein.</li>
+   <li>Sechs Runden-Varianten wechseln sich ab. Nach 5 Runden kam jede der 15 möglichen Paarungen vor.</li>
+   <li>Fehlt einer, spielen die anderen eine Runde zu viert (3 Spiele). Sie zählt ganz normal.</li>
+   <li>Ein <strong>Spieltag</strong> wird automatisch erkannt: Alles bis 5 Uhr morgens zählt noch zum Vortag, wer also nach Mitternacht weiterspielt, bleibt im selben Spieltag.</li></ul>`,true)
+   +acc("2","Wertung",`<ul><li>Eine Wertung für alles: <strong>Siegquote (Siege ÷ Spiele)</strong>. Gewertet wird, wer mindestens ein Drittel so viele Spiele hat wie der Fleißigste, mindestens ${MINGAMES}.</li>
+   <li>Spiele während eines laufenden Turniers zählen für das Turnier <strong>und</strong> für die ewige Tabelle. Ohne Turnier zählen sie nur für die ewige Tabelle.</li>
+   <li>Tagessieger: beste Siegquote des Tages, gleiche Drittel-Regel.</li>
+   <li>Gleichstand: mehr Siege, dann direkter Vergleich, dann Elo, notfalls ein Entscheidungsspiel.</li>
+   <li>Elo ist nur Anzeige. Dream-Team ab 3 gemeinsamen Spielen. Das Fun-Finale zählt nicht.</li></ul>`)
+   +acc("3","Wertung im Detail erklärt",explainHTML().replace(/class="acc"/g,'class="acc" style="background:var(--bg2)"'));
+  h+=`<h2>Offizielle Regeln</h2><p class="lead-p">Zusammengefasst nach den Regeln von Spikeball und dem internationalen Roundnet-Verband (IRF). Für Streitfälle zum Nachschlagen.</p>`;
+  h+=acc("1","Aufbau",`<ul><li>Zwei Teams mit je zwei Spielern stehen sich am Netz gegenüber, Partner nebeneinander.</li>
+   <li>Netzspannung prüfen: Ball aus etwa 90 cm Höhe fallen lassen, er sollte etwa 30 bis 45 cm hochspringen.</li>
+   <li>Vor dem Aufschlag gibt es keine Seiten und kein Spielfeld. Danach darf sich jeder frei um das Netz bewegen.</li></ul>`)
+  +acc("2","Aufschlag",`<ul><li>Der Aufschläger steht dem <strong>Annehmenden genau gegenüber</strong>. Nur der Annehmende darf den Aufschlag annehmen.</li>
+   <li>Alle außer dem Annehmenden starten mindestens etwa <strong>2 m</strong> (7 Fuß) vom Netz entfernt.</li>
+   <li>Der Ball wird hochgeworfen und auf das Netz geschlagen. Härte und Richtung sind frei, auch kurze Aufschläge sind erlaubt.</li>
+   <li>Der Aufschlag muss <strong>sauber vom Netz</strong> abspringen, also nicht den Rand oder die Kante (Pocket) treffen.</li>
+   <li>Pro Aufschlag gibt es einen zweiten Versuch. <strong>Zwei Fehler in Folge</strong> sind ein Punkt für die Annehmenden.</li>
+   <li>Fehler sind etwa: Ball nicht getroffen, fallen gelassen oder gefangen, Netz verfehlt, Rand oder Pocket getroffen.</li></ul>`)
+  +acc("3","Ballwechsel",`<ul><li>Jedes Team hat höchstens <strong>3 Berührungen</strong>, um den Ball zurück aufs Netz zu spielen.</li>
+   <li>Die Berührungen <strong>wechseln sich ab</strong>: Niemand darf den Ball zweimal hintereinander spielen.</li>
+   <li>Der Ball muss sauber geschlagen werden. Fangen, Halten oder Werfen ist verboten.</li>
+   <li>Jeder Körperteil ist erlaubt.</li>
+   <li>Der Punkt endet, wenn der Ball den Boden berührt oder nach 3 Berührungen nicht auf dem Netz landet.</li></ul>`)
+  +acc("4","Rand, Pocket und Sonderfälle",`<ul><li><strong>Rand:</strong> Trifft der Ball direkt den Rand, verliert das Team den Punkt (beim Aufschlag zählt es als Fehlversuch).</li>
+   <li><strong>Pocket:</strong> Landet der Ball im Übergang zwischen Netz und Rand, ist das im Ballwechsel erlaubt, beim Aufschlag nicht.</li>
+   <li><strong>Roll-up:</strong> Rollt der Ball aus der Pocket über den Rand, zählt er wie ein normaler Pocket-Ball.</li>
+   <li><strong>Zurückfallen:</strong> Springt der Ball vom Netz hoch und fällt wieder auf Netz oder Rand, verliert das Team, das ihn gespielt hat.</li>
+   <li><strong>Soft Touch:</strong> Springt der Ball vom Netz an einen Verteidiger und fliegt weiter nach oben, darf dieser ihn noch einmal spielen. Danach muss der Partner aufs Netz spielen.</li></ul>`)
+  +acc("5","Behinderung und Streitfälle",`<ul><li>Die verteidigende Mannschaft muss sich bemühen, dem angreifenden Team nicht im Weg zu stehen.</li>
+   <li>Wird ein Spieler behindert (Zusammenstoß oder ein Gegner steht so, dass ein spielbarer Ball nicht erreichbar ist), ruft er <strong>„Hinder"</strong> und der Punkt wird wiederholt.</li>
+   <li>Können sich die Teams nicht einigen, ob ein Schlag regelkonform war, wird der Punkt wiederholt. Bei uns entscheidet zuerst der Schiri.</li></ul>`)
+  +acc("6","Zählweise und Aufschlagwechsel",`<ul><li>Es gilt <strong>Rally-Point</strong>: Jeder Ballwechsel gibt einen Punkt, egal wer aufgeschlagen hat.</li>
+   <li>Gespielt wird meist bis 11, 15 oder 21, gewonnen mit 2 Punkten Vorsprung.</li>
+   <li>Zu Beginn wird eine feste Aufschlagreihenfolge festgelegt.</li>
+   <li>Gewinnt das <strong>annehmende</strong> Team den Punkt, schlägt dessen nächster Spieler in der Reihenfolge auf.</li>
+   <li>Gewinnt das <strong>aufschlagende</strong> Team, tauscht der Aufschläger den Platz mit seinem Partner und schlägt erneut auf, jetzt zum anderen Gegner.</li></ul>`)
+  +acc("7","Turnier-Zusätze (IRF)",`<p>Bei offiziellen Turnieren kommen noch Regeln dazu, die ihr für Freizeitspiele nicht braucht:</p>
+   <ul><li>Der Ball muss nach dem Hochwerfen mindestens 10 cm fliegen, bevor er geschlagen wird.</li>
+   <li>Der Aufschlag darf nicht höher fliegen als die Schulter des Annehmenden in leicht gebeugter Bereitschaftshaltung.</li>
+   <li>Die Aufschlaglinie liegt etwa 2,13 m vom Netzrand entfernt. Der Aufschläger muss mit dem Standfuß Kontakt zum Boden halten, bis der Ball das Netz trifft.</li>
+   <li>Meist bis 15 oder 21 Punkte, pro Satz eine Auszeit von 60 Sekunden, 5 Sekunden Zeit für den Aufschlag.</li>
+   <li>Netz: rund 91 cm Durchmesser. Ball: etwa 30 cm Umfang.</li></ul>`);
+  h+=`<p class="src">Quellen: <a href="https://spikeball.com/en-uk/pages/official-rules" target="_blank" rel="noopener">Spikeball – Official Rules</a> · <a href="https://www.roundnetfederation.org/s/IRF-Rules-10212021docx-1.pdf" target="_blank" rel="noopener">IRF-Regelwerk (Stand Oktober 2021)</a>. Verbände passen ihre Turnierregeln gelegentlich an.</p>`;
+  return h;
+}
+
+/* ---------- Rendern ---------- */
+let lastChatN=-1;
+function render(){
+  const sc=S.tab==="play"?(activeTour()||"all"):scopeId();
+  const C=compute(sc);
+  if(S.tab==="chat"&&S.chat.length){const mx=Math.max(...S.chat.map(m=>m.ts||0));if(mx>S.lastSeen){S.lastSeen=mx;try{localStorage.setItem("spikeball-seen",String(mx))}catch(e){}}}
+  const unread=S.chat.filter(m=>m&&m.ts>S.lastSeen&&m.by!==S.me).length;
+  $("#tabs").innerHTML=TABS.map(t=>`<button class="tab" role="tab" data-act="tab" data-tab="${t.id}" aria-selected="${S.tab===t.id}"><span class="tic"><svg viewBox="0 0 24 24" aria-hidden="true">${t.icon}</svg>${t.id==="chat"&&unread?`<b class="badge">${unread>9?"9+":unread}</b>`:""}</span>${t.label}</button>`).join("");
+  const at=activeTour();$("#sub").textContent=at?"Turnier: "+tourName(at):"Freies Spiel · ewige Tabelle";
+  $("#composer").hidden=!(S.tab==="chat"&&S.me&&S.mode!=="loading"&&S.canWrite);
+  const st=$("#status");st.className="status"+(S.mode==="live"?" live":"");
+  st.textContent=S.mode==="live"?(S.canWrite?"Live":"Nur Ansicht"):S.mode==="local"?"Nur dieses Gerät":"Lädt …";
+  if(S.mode==="loading")return;
+  const v={play:viewPlay,table:viewTable,stats:viewStats,tours:viewTours,chat:viewChat,more:viewMore}[S.tab](C);
+  let banner="";
+  if(S.mode==="local")banner=`<div class="banner">Der gemeinsame Spielstand ist hier nicht erreichbar. Ergebnisse werden nur auf diesem Gerät gespeichert.</div>`;
+  else if(!S.canWrite)banner=`<div class="banner">Du kannst zuschauen. Ergebnisse eintragen kann, wer den Link mit Bearbeitungsrecht bekommen hat.</div>`;
+  $("#view").innerHTML=banner+v;
+  if(S.tab==="chat"&&S.chat.length!==lastChatN){lastChatN=S.chat.length;window.scrollTo(0,document.body.scrollHeight)}
+}
+
+/* ---------- Eingabe ---------- */
+let sheetCtx=null;
+function openEntry(t1,t2,ref,save,title,to=11){
+  sheetCtx={t1,t2,ref,save,to,game:to===11};
+  $("#sheet").innerHTML=`<div class="sheetbg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="Ergebnis eintragen" data-stop="1">
+    <div class="eyebrow">${esc(title||"Ergebnis eintragen")}</div>
+    ${ref?`<div class="row small muted" style="margin-top:4px">${av(ref,"sm")} ${esc(nameOf(ref))} pfeift</div>`:""}
+    <div class="entry">${[t1,t2].map((t,i)=>`<div class="side"><span class="avs">${av(t[0],"lg")}${av(t[1],"lg")}</span><span class="nm">${esc(nameOf(t[0]))} + ${esc(nameOf(t[1]))}</span>
+      <div class="stepper"><button data-act="step" data-i="${i}" data-d="-1" aria-label="Minus">−</button><input id="sc${i}" inputmode="numeric" pattern="[0-9]*" value="" aria-label="Punkte ${esc(nameOf(t[0]))} und ${esc(nameOf(t[1]))}"><button data-act="step" data-i="${i}" data-d="1" aria-label="Plus">+</button></div>
+      <button class="chip" data-act="eleven" data-i="${i}">${to} Punkte</button></div>`).join("")}</div>
+    <div class="err" id="err"></div>
+    <div class="btns"><button class="btn pri" style="flex:1" data-act="save">Ergebnis speichern</button><button class="btn ghost" data-act="close">Abbrechen</button></div>
+  </div></div>`;
+}
+function closeSheet(){$("#sheet").innerHTML="";sheetCtx=null;S.pendingVote=null;S.pendingDel=null}
+function openFour(){
+  $("#sheet").innerHTML=`<div class="sheetbg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="Wer fehlt" data-stop="1">
+    <div class="eyebrow">Runde zu viert</div><h3 style="margin-top:6px">Wer fehlt?</h3>
+    <div class="stack">${IDS.map(p=>`<button class="mode" data-act="absent" data-p="${p}">${av(p)}<div><strong>${esc(nameOf(p))}</strong><span>Die anderen vier spielen 3 Spiele.</span></div></button>`).join("")}</div>
+    <div class="btns" style="margin-top:12px"><button class="btn ghost" data-act="close">Abbrechen</button></div></div></div>`;
+}
+
+async function castVote(target,v){
+  if(!MODES[v]||!S.me)return;
+  if(target==="all"){if(isLocked("all"))return;const votes={...(S.settings.votes||{}),[S.me]:v},maj=majority(votes);
+    await guard(()=>store.setSettings({...S.settings,votes,...(maj?{mode:maj}:{})}));toast(maj?"Mehrheit: "+MODES[maj].name+" ist festgelegt":"Stimme gezählt")}
+  else{const T=S.tours[target];if(!T||isLocked(target))return;const votes={...(T.votes||{}),[S.me]:v},maj=majority(votes);
+    await guard(()=>store.set("tournaments",target,{...T,votes,...(maj?{mode:maj}:{})}));toast(maj?"Mehrheit: "+MODES[maj].name+" ist festgelegt":"Stimme gezählt")}
+}
+async function lockModes(){
+  if(!isLocked("all"))await store.setSettings({...S.settings,mode:leader(S.settings.votes)});
+  const at=activeTour();if(at&&!isLocked(at))await store.set("tournaments",at,{...S.tours[at],mode:leader(S.tours[at].votes)});
+}
+async function deleteGame(id){
+  const g=allGames().find(x=>x.id===id);S.confirmDel=null;
+  await guard(()=>store.del("games",id));S.myDeletes.add(id);
+  if(g&&isGame(g)){const txt=`${nameOf(S.me)} hat ein Spiel gelöscht: ${nameOf(g.t1[0])} + ${nameOf(g.t1[1])} ${g.s1}:${g.s2} ${nameOf(g.t2[0])} + ${nameOf(g.t2[1])} (${dayLabel(g.ts?spieltag(g.ts):g.day)})`;
+    try{await store.set("chat","m"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),{sys:true,by:S.me,text:txt,ts:Date.now()})}catch(e){}}
+  toast("Spiel gelöscht, alle wurden im Chat informiert");
+}
+function openWho(title){
+  $("#sheet").innerHTML=`<div class="sheetbg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="Wer bist du" data-stop="1">
+    <div class="eyebrow">${esc(title||"Wer bist du?")}</div><h3 style="margin-top:6px">Wer bist du?</h3><p class="muted small" style="margin:0 0 10px">Das merkt sich dieses Gerät. Beim Löschen erfahren alle im Chat, wer was gelöscht hat.</p>
+    <div class="stack">${IDS.map(p=>`<button class="mode" data-act="me" data-p="${p}">${av(p)}<div><strong>${esc(nameOf(p))}</strong></div></button>`).join("")}</div>
+    <div class="btns" style="margin-top:12px"><button class="btn ghost" data-act="close">Abbrechen</button></div></div></div>`;
+}
+function openNewTour(){
+  const N=S.newTour;
+  $("#sheet").innerHTML=`<div class="sheetbg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="Neues Turnier" data-stop="1">
+    <div class="eyebrow">Neues Turnier</div><h3 style="margin-top:6px">Wie heißt das Turnier?</h3>
+    <input class="field" id="tname" maxlength="40" placeholder="z. B. Dänemark 2026 oder Jonas 40" value="${esc(N.name)}" autocomplete="off">
+    <div class="eyebrow" style="margin-top:16px">Anlass</div><div class="chips" style="margin-top:8px">${THEMES.map(x=>`<button class="chip" data-act="theme" data-v="${x}" aria-pressed="${N.theme===x}">${x}</button>`).join("")}</div>
+    <p class="note">Gewertet wird wie in der ewigen Tabelle, nur mit den Spielen dieses Turniers. Die ewige Tabelle läuft unabhängig davon weiter.</p>
+    <div class="err" id="terr"></div>
+    <div class="btns"><button class="btn pri" style="flex:1" data-act="createtour">Turnier starten</button><button class="btn ghost" data-act="close">Abbrechen</button></div></div></div>`;
+}
+document.addEventListener("submit",async ev=>{
+  if(ev.target.id!=="composer")return;ev.preventDefault();
+  const inp=$("#msg"),text=inp.value.trim().slice(0,500);if(!text||!S.me)return;
+  const id="m"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  inp.value="";try{await guard(()=>store.set("chat",id,{by:S.me,text,ts:Date.now()}))}catch(e){inp.value=text}
+});
+
+/* ---------- Speichern ---------- */
+async function guard(fn){
+  try{await fn()}catch(e){
+    if(e&&e.code==="invalid_argument"&&S.mode==="live"){S.canWrite=false;render();toast("Du hast hier keine Schreibrechte.")}
+    else if(e&&e.code==="quota_exceeded")toast("Speicher voll. Alte Spiele löschen.");
+    else toast("Speichern hat nicht geklappt. Bitte nochmal.");
+    throw e;
+  }
+}
+const settingsPatch=async patch=>{const next={...S.settings,...patch};await guard(()=>store.setSettings(next))};
+
+document.addEventListener("click",async ev=>{
+  const t=ev.target.closest("[data-act]");if(!t)return;
+  if(t.dataset.act==="close"&&ev.target.closest("[data-stop]")&&t.classList.contains("sheetbg"))return;
+  const a=t.dataset.act,C=()=>compute();
+  try{
+  if(a==="tab"){S.tab=t.dataset.tab;S.confirmDel=null;S.confirmEnd=false;lastChatN=-1;render();if(S.tab!=="chat")window.scrollTo(0,0)}
+  else if(a==="scope"){S.scope=t.dataset.id;if(t.dataset.go)S.tab=t.dataset.go;render();window.scrollTo(0,0)}
+  else if(a==="newtour"){openNewTour()}
+  else if(a==="theme"){S.newTour.theme=t.dataset.v;S.newTour.name=$("#tname").value;openNewTour()}
+  else if(a==="createtour"){const name=$("#tname").value.trim().slice(0,40);if(!name){$("#terr").textContent="Bitte gib dem Turnier einen Namen.";return}
+    const id="t"+Date.now().toString(36),T={name,theme:S.newTour.theme,mode:null,votes:{},start:Date.now(),end:null};
+    await guard(async()=>{await store.set("tournaments",id,T);await store.setSettings({...S.settings,active:id,four:null})});
+    S.newTour={name:"",theme:"Urlaub",mode:"kombi"};S.scope=null;closeSheet();S.tab="play";render();toast("Turnier „"+name+"\" gestartet")}
+  else if(a==="endask"){S.confirmEnd=true;render()}
+  else if(a==="endno"){S.confirmEnd=false;render()}
+  else if(a==="endtour"){const id=activeTour();if(!id)return;S.confirmEnd=false;
+    await guard(async()=>{await store.set("tournaments",id,{...S.tours[id],end:Date.now()});await store.setSettings({...S.settings,active:null})});toast("Turnier beendet")}
+  else if(a==="me"&&S.pendingDel){S.me=t.dataset.p;try{localStorage.setItem("spikeball-me",S.me)}catch(e){}const id=S.pendingDel;S.pendingDel=null;closeSheet();await deleteGame(id)}
+  else if(a==="me"){S.me=t.dataset.p;try{localStorage.setItem("spikeball-me",S.me)}catch(e){}
+    if(S.pendingVote){const pv=S.pendingVote;S.pendingVote=null;closeSheet();await castVote(pv.target,pv.v)}else render()}
+  else if(a==="vote"){if(!S.me){S.pendingVote={target:t.dataset.target,v:t.dataset.v};openWho()}else await castVote(t.dataset.target,t.dataset.v)}
+  else if(a==="meclear"){S.me=null;render()}
+  else if(a==="sim"){S.simExtra=Number(t.dataset.v);render()}
+  else if(a==="tourx"){S.tourExtra=Number(t.dataset.v);render()}
+  else if(a==="enter"){
+    const R=roundState(C()),slot=Number(t.dataset.slot);
+    if(R.fourGames){const x=R.fourGames[slot];const four=R.four;
+      openEntry(x.t1,x.t2,null,(s1,s2)=>store.set("games",`v${four.id}-${slot}`,{kind:"4",group:four.id,slot,t1:x.t1,t2:x.t2,s1,s2,ts:Date.now(),day:spieltag(Date.now()),tour:activeTour()}),"Runde zu viert");}
+    else{const x=R.games[slot];
+      openEntry(x.t1,x.t2,x.ref,(s1,s2)=>store.set("games",`r${R.k}-s${slot}`,{kind:"5",round:R.k,slot,ref:x.ref,t1:x.t1,t2:x.t2,s1,s2,ts:Date.now(),day:spieltag(Date.now()),tour:activeTour()}),"Runde "+(R.k+1));}
+  }
+  else if(a==="step"){const i=$("#sc"+t.dataset.i);i.value=Math.max(0,(parseInt(i.value,10)||0)+Number(t.dataset.d))}
+  else if(a==="eleven"){const i=t.dataset.i,o=$("#sc"+(1-i)),me=$("#sc"+i),ov=parseInt(o.value,10)||0;const to=sheetCtx?sheetCtx.to:11;me.value=ov>=to-1?ov+2:to}
+  else if(a==="save"&&sheetCtx){
+    const s1=parseInt($("#sc0").value,10),s2=parseInt($("#sc1").value,10);const msg=validScore(s1,s2,sheetCtx.to);
+    if(msg){$("#err").textContent=msg;return}
+    const ctx=sheetCtx;t.disabled=true;
+    try{await guard(async()=>{await ctx.save(s1,s2)});closeSheet();toast("Gespeichert")}catch(e){t.disabled=false}
+  }
+  else if(a==="close"){closeSheet()}
+  else if(a==="four"){openFour()}
+  else if(a==="absent"){await settingsPatch({four:{id:Date.now().toString(36),absent:t.dataset.p}});closeSheet();toast(nameOf(t.dataset.p)+" fehlt: Runde zu viert")}
+  else if(a==="endfour"){await settingsPatch({four:null});toast("Weiter zu fünft")}
+  else if(a==="delask"){S.confirmDel=t.dataset.id;render()}
+  else if(a==="delno"){S.confirmDel=null;render()}
+  else if(a==="del"){const id=t.dataset.id;if(!S.me){S.pendingDel=id;openWho("Wer löscht?");return}await deleteGame(id)}
+  else if(a==="finale"){const t1=t.dataset.t1.split(""),t2=t.dataset.t2.split(""),ref=t.dataset.ref,id=t.dataset.tour;
+    openEntry(t1,t2,ref,(s1,s2)=>store.set("tournaments",id,{...S.tours[id],finale:{t1,t2,ref,s1,s2,ts:Date.now()}}),"Fun-Finale (bis 21)",21);}
+  else if(a==="finalreset"){const id=t.dataset.tour;await guard(()=>store.set("tournaments",id,{...S.tours[id],finale:null}))}
+  }catch(e){}
+});
+document.addEventListener("change",async ev=>{
+  const inp=ev.target.closest("[data-photo]");if(!inp||!inp.files||!inp.files[0])return;
+  const p=inp.dataset.photo;
+  try{const url=await resizeImage(inp.files[0]);await guard(()=>store.set("players",p,{...(S.players[p]||{}),photo:url}));toast("Profilbild gespeichert")}
+  catch(e){if(!e||!e.code)toast("Dieses Bild ließ sich nicht öffnen. Bitte ein JPG oder PNG wählen.")}
+  inp.value="";
+});
+function resizeImage(file){return new Promise((res,rej)=>{const img=new Image(),url=URL.createObjectURL(file);
+  img.onload=()=>{const s=Math.min(img.naturalWidth,img.naturalHeight),c=document.createElement("canvas");c.width=c.height=192;
+    c.getContext("2d").drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,192,192);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",.82))};
+  img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("bild"))};img.src=url})}
+
+/* ---------- Speicher: gemeinsam oder lokal ---------- */
+const COLS=["games","players","tournaments","chat"];
+function applyCol(col,entries){
+  if(col==="games"){const next=entries.map(([id,d])=>({...d,id}));
+    if(S.gamesLoaded){const ids=new Set(next.map(g=>g.id));const gone=S.games.filter(g=>!ids.has(g.id)&&!S.myDeletes.has(g.id)&&g.ts>=(next.length>=1000?Math.min(...next.map(x=>x.ts||0)):-Infinity));
+      if(gone.length)setTimeout(()=>toast(gone.length===1?"Ein Spiel wurde gelöscht. Details im Chat.":gone.length+" Spiele wurden gelöscht. Details im Chat."),0)}
+    S.games=next;S.gamesLoaded=true}
+  else if(col==="players"){const o={};entries.forEach(([id,d])=>o[id]=d);S.players=o}
+  else if(col==="tournaments"){const o={};entries.forEach(([id,d])=>{if(d&&Number.isFinite(d.start))o[id]=d});S.tours=o}
+  else if(col==="chat")S.chat=entries.map(([id,d])=>({...d,id})).sort((a,b)=>a.ts-b.ts);
+}
+function localStore(){
+  const KEY="spikeball-liga-v2";let data={settings:{}};COLS.forEach(c=>data[c]={});
+  try{const raw=localStorage.getItem(KEY);if(raw)data={...data,...JSON.parse(raw)}}catch(e){}
+  const push=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}
+    COLS.forEach(c=>applyCol(c,Object.entries(data[c]||{})));S.settings=data.settings||{};render()};
+  setTimeout(push,0);
+  return{set:async(c,id,d)=>{data[c][id]=d;push()},del:async(c,id)=>{delete data[c][id];push()},setSettings:async st=>{data.settings=st;push()}};
+}
+function liveStore(db){
+  const ent=s=>s.docs.map(d=>[d.id,d.data()]);
+  db.collection("games").orderBy("ts","desc").limit(1000).onSnapshot(sn=>{applyCol("games",ent(sn));render();
+    if(sn.size>=1000&&!S.olderLoading){S.olderLoading=true;loadOlder(db,Math.min(...S.games.map(g=>g.ts)))}},()=>{});
+  db.collection("players").onSnapshot(sn=>{applyCol("players",ent(sn));render()},()=>{});
+  db.collection("tournaments").limit(500).onSnapshot(sn=>{applyCol("tournaments",ent(sn));render()},()=>{});
+  db.collection("chat").orderBy("ts","desc").limit(300).onSnapshot(sn=>{applyCol("chat",ent(sn));render()},()=>{});
+  db.doc("settings/main").onSnapshot(sn=>{S.settings=sn.exists?sn.data():{};render()},()=>{});
+  return{set:(c,id,d)=>db.collection(c).doc(id).set(d),del:(c,id)=>db.collection(c).doc(id).delete(),setSettings:st=>db.doc("settings/main").set(st)};
+}
+async function loadOlder(db,before){
+  /* Ältere Spiele (über 1000) einmalig seitenweise nachladen */
+  try{let cur=before,acc=[];for(let i=0;i<50;i++){const sn=await db.collection("games").where("ts","<",cur).orderBy("ts","desc").limit(1000).get();
+      if(!sn.size)break;sn.docs.forEach(d=>acc.push({...d.data(),id:d.id}));cur=Math.min(...sn.docs.map(d=>d.data().ts));if(sn.size<1000)break}
+    S.gamesOld=acc;render()}catch(e){}
+}
+const FIREBASE_CONFIG={apiKey:"AIzaSyAu8cE4xq5tBgxQquEiNY1ObSrXU52IXn4",authDomain:"spikeball-liga-d7061.firebaseapp.com",projectId:"spikeball-liga-d7061",storageBucket:"spikeball-liga-d7061.firebasestorage.app",messagingSenderId:"365600070290",appId:"1:365600070290:web:c0aabf8238ba6045ac244b"};
+async function boot(){
+  render();
+  let db=null,user=null;
+  try{if(window.claude&&window.claude.use){[db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")])}}catch(e){}
+  if(db){S.mode="live";store=liveStore(db);
+    if(user){try{const c=await user.can("data.write");if(c===false)S.canWrite=false}catch(e){}}}
+  else if(window.firebase&&FIREBASE_CONFIG){try{firebase.initializeApp(FIREBASE_CONFIG);S.mode="live";store=liveStore(firebase.firestore())}catch(e){S.mode="local";store=localStore()}}
+  else{S.mode="local";store=localStore()}
+  render();
+}
+boot();
+</script>
