@@ -1,7 +1,14 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090d12">
 <title>Spikeball Liga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
+*,*::before,*::after{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh}
 /* Layout: Handy-App, eine Spalte, Anzeigetafel oben, Tab-Leiste unten. Bewusst nur dunkel: Flutlicht-Platz bei Nacht, Netzrand-Gelb als einzige Signalfarbe. */
 :root{
   color-scheme:dark;
@@ -216,6 +223,8 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-
 .src{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.7}
 @media (prefers-reduced-motion:no-preference){.game,.mode,.chip,.btn{transition:transform .12s,background .15s,border-color .15s}.game:not(.done):active,.btn:active{transform:scale(.98)}}
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header class="top">
@@ -945,3 +954,5 @@ async function boot(){
 }
 boot();
 </script>
+</body>
+</html>
